@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NeuralPrep — Features</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="manifest" href="manifest.json"/>
+<style>
+:root{
+  --bg:#05060f;--bg2:#0b0d1e;
+  --surface:rgba(255,255,255,0.04);--surface2:rgba(255,255,255,0.08);
+  --border:rgba(255,255,255,0.09);
+  --accent:#6c63ff;--accent2:#00d9c0;--accent3:#ff6b6b;
+  --success:#00e676;--warning:#ffa000;--danger:#ff1744;
+  --text:#e8e9f3;--muted:#6b6d8a;--glow:rgba(108,99,255,0.3);
+}
+[data-theme="light"]{
+  --bg:#f0f1fa;--bg2:#e4e6f7;
+  --surface:rgba(0,0,0,0.04);--surface2:rgba(0,0,0,0.08);
+  --border:rgba(0,0,0,0.09);--text:#0d0e1f;--muted:#7b7d9a;--glow:rgba(108,99,255,0.15);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* NAV */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 2.5rem;
+  background:rgba(5,6,15,0.9);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:1000;flex-wrap:wrap;gap:0.5rem;
+}
+[data-theme="light"] nav{background:rgba(240,241,250,0.92);}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none;}
+.nav-right{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;}
+.nav-right a{color:var(--muted);text-decoration:none;font-size:0.83rem;transition:color 0.2s;padding:0.3rem 0.5rem;}
+.nav-right a:hover{color:var(--text);}
+.nbtn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:0.38rem 0.85rem;border-radius:20px;cursor:pointer;font-size:0.78rem;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.nbtn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* PAGE */
+.page{max-width:1050px;margin:0 auto;padding:2rem 1.5rem 5rem;}
+.page-hero{
+  background:linear-gradient(135deg,rgba(108,99,255,0.12),rgba(0,217,192,0.06));
+  border:1px solid rgba(108,99,255,0.2);border-radius:20px;
+  padding:2rem;margin-bottom:2rem;position:relative;overflow:hidden;
+}
+.page-hero::before{content:'';position:absolute;top:-50%;right:-20%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(108,99,255,0.15),transparent 70%);pointer-events:none;}
+.page-hero h1{font-family:'Syne',sans-serif;font-size:clamp(1.4rem,3vw,2rem);font-weight:800;letter-spacing:-0.5px;margin-bottom:0.4rem;}
+.page-hero p{color:var(--muted);font-size:0.88rem;max-width:600px;line-height:1.6;}
+.hero-badges{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem;}
+.hero-badge{background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);color:var(--accent);padding:0.25rem 0.75rem;border-radius:20px;font-size:0.75rem;font-weight:500;}
+.hero-badge.teal{background:rgba(0,217,192,0.1);border-color:rgba(0,217,192,0.2);color:var(--accent2);}
+.hero-badge.red{background:rgba(255,107,107,0.1);border-color:rgba(255,107,107,0.2);color:var(--accent3);}
+
+/* TABS */
+.tabs-wrap{
+  display:flex;gap:0;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:5px;margin-bottom:1.8rem;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.tabs-wrap::-webkit-scrollbar{display:none;}
+.tab-btn{
+  flex-shrink:0;
+  padding:0.6rem 1.1rem;border:none;background:transparent;
+  color:var(--muted);font-family:'DM Sans',sans-serif;
+  font-size:0.82rem;font-weight:500;cursor:pointer;
+  border-radius:11px;transition:all 0.2s;white-space:nowrap;
+  display:flex;align-items:center;gap:0.35rem;
+}
+.tab-btn.active{background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;box-shadow:0 4px 15px rgba(108,99,255,0.3);}
+.tab-btn:hover:not(.active){color:var(--text);background:var(--surface2);}
+
+/* PANELS */
+.panel{display:none;}
+.panel.active{display:block;animation:panelIn 0.25s ease;}
+@keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.6rem;margin-bottom:1.2rem;}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.5rem;}
+.card-title .ctag{background:rgba(108,99,255,0.12);color:var(--accent);padding:0.15rem 0.5rem;border-radius:5px;font-size:0.68rem;font-weight:600;}
+
+/* ==================== AI CHAT ==================== */
+.chat-box{height:360px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:0.9rem;display:flex;flex-direction:column;gap:0.6rem;scroll-behavior:smooth;}
+.msg{max-width:82%;padding:0.7rem 1rem;border-radius:14px;font-size:0.87rem;line-height:1.65;animation:msgIn 0.2s ease;word-break:break-word;}
+@keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;align-self:flex-end;border-radius:14px 4px 14px 14px;}
+.msg.bot{background:var(--surface2);color:var(--text);align-self:flex-start;border-radius:4px 14px 14px 14px;border:1px solid var(--border);}
+.msg.typing-indicator{opacity:0.6;font-style:italic;}
+.chat-row{display:flex;gap:0.6rem;}
+.chat-input{flex:1;padding:0.75rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+.chat-input:focus{border-color:var(--accent);}
+.chat-input::placeholder{color:var(--muted);}
+.send-btn{background:linear-gradient(135deg,var(--accent),#8b5cf6);border:none;color:#fff;padding:0.75rem 1.2rem;border-radius:12px;cursor:pointer;font-weight:600;font-size:0.88rem;transition:all 0.2s;white-space:nowrap;}
+.send-btn:hover{transform:translateY(-1px);box-shadow:0 4px 15px var(--glow);}
+.send-btn:disabled{opacity:0.5;pointer-events:none;}
+.suggestions{display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.75rem;}
+.sug{background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.18);color:var(--accent);padding:0.28rem 0.7rem;border-radius:20px;font-size:0.76rem;cursor:pointer;transition:all 0.15s;}
+.sug:hover{background:rgba(108,99,255,0.18);}
+
+/* ==================== POMODORO ==================== */
+.pom-wrap{text-align:center;padding:1.5rem 1rem;}
+.pom-modes{display:flex;gap:0.5rem;justify-content:center;margin-bottom:1.2rem;flex-wrap:wrap;}
+.pom-mode{padding:0.4rem 1rem;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.pom-mode.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.pom-circle-wrap{position:relative;width:200px;height:200px;margin:0 auto 1.2rem;}
+.pom-svg{position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:var(--border);stroke-width:10;}
+.ring-fill{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-dasharray:565;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear,stroke 0.3s;}
+.pom-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.pom-time{font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:800;line-height:1;}
+.pom-lbl{font-size:0.78rem;color:var(--muted);margin-top:0.3rem;}
+.pom-dots{display:flex;gap:0.4rem;justify-content:center;margin-bottom:1rem;}
+.pdot{width:11px;height:11px;border-radius:50%;background:var(--border);transition:background 0.3s;}
+.pdot.done{background:var(--accent);}
+.pom-btns{display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem;}
+.pb{padding:0.65rem 1.4rem;border-radius:11px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.88rem;transition:all 0.2s;}
+.pb-start{background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;}
+.pb-start:hover{transform:translateY(-2px);box-shadow:0 6px 18px var(--glow);}
+.pb-reset{background:var(--surface);border:1px solid var(--border);color:var(--text);}
+.pb-skip{background:rgba(0,217,192,0.1);border:1px solid rgba(0,217,192,0.3);color:var(--accent2);}
+.pom-subj{max-width:380px;margin:0 auto 1rem;display:flex;gap:0.5rem;}
+.pom-subj input{flex:1;padding:0.55rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.84rem;outline:none;}
+.pom-subj input:focus{border-color:var(--accent);}
+.pom-log{max-height:130px;overflow-y:auto;margin-top:0.8rem;}
+.plog-item{font-size:0.79rem;color:var(--muted);padding:0.28rem 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;}
+
+/* ==================== MENTAL HEALTH ==================== */
+.mh-q{font-size:0.95rem;font-weight:600;margin-bottom:1rem;line-height:1.5;}
+.mh-opts{display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:1.2rem;}
+.mh-opt{flex:1;min-width:70px;background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:0.75rem 0.4rem;text-align:center;cursor:pointer;transition:all 0.2s;font-size:1.4rem;}
+.mh-opt:hover{border-color:var(--accent);transform:translateY(-3px);}
+.mh-opt.sel{border-color:var(--accent);background:rgba(108,99,255,0.1);box-shadow:0 0 12px rgba(108,99,255,0.2);}
+.mh-opt-lbl{font-size:0.67rem;color:var(--muted);margin-top:0.2rem;}
+.mh-result{background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(0,217,192,0.06));border:1px solid rgba(108,99,255,0.18);border-radius:12px;padding:1.2rem;margin-bottom:1rem;display:none;}
+.mh-result.show{display:block;}
+.mh-bar-wrap{height:7px;background:var(--border);border-radius:4px;overflow:hidden;margin:0.6rem 0;}
+.mh-bar{height:100%;border-radius:4px;transition:width 1s ease;}
+.mh-tip{font-size:0.83rem;color:var(--muted);line-height:1.7;margin-top:0.5rem;}
+.mh-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:0.8rem 0;}
+.mh-cell{height:22px;border-radius:4px;}
+.mh-hist{display:flex;flex-direction:column;gap:0.4rem;}
+.mh-hist-item{display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0.7rem;background:var(--surface2);border-radius:8px;font-size:0.8rem;}
+
+/* ==================== PROFILE ==================== */
+.avatar-wrap{text-align:center;margin-bottom:1.2rem;}
+.avatar{width:75px;height:75px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:inline-flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;position:relative;transition:transform 0.2s;}
+.avatar:hover{transform:scale(1.05);}
+.avatar-hint{font-size:0.72rem;color:var(--muted);margin-top:0.4rem;}
+.prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;}
+.pf{display:flex;flex-direction:column;gap:0.35rem;}
+.pf label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;}
+.pf input,.pf select{padding:0.65rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.87rem;outline:none;transition:border-color 0.2s;width:100%;appearance:none;}
+.pf input:focus,.pf select:focus{border-color:var(--accent);}
+.pf input::placeholder{color:var(--muted);}
+.btn-save{width:100%;margin-top:1rem;padding:0.8rem;background:linear-gradient(135deg,var(--accent),#8b5cf6);border:none;border-radius:12px;color:#fff;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.btn-save:hover{transform:translateY(-2px);box-shadow:0 6px 18px var(--glow);}
+.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;margin-top:1rem;}
+.ps{background:var(--surface2);border-radius:10px;padding:0.8rem;text-align:center;}
+.ps-num{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--accent);}
+.ps-lbl{font-size:0.68rem;color:var(--muted);margin-top:0.2rem;}
+
+/* ==================== STUDY TIPS ==================== */
+.tips-filter{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem;}
+.tf{padding:0.32rem 0.85rem;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.tf.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;}
+.tip-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem;transition:all 0.25s;position:relative;overflow:hidden;}
+.tip-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.tip-card:hover{transform:translateY(-4px);border-color:rgba(108,99,255,0.3);}
+.tip-emoji{font-size:1.6rem;margin-bottom:0.5rem;}
+.tip-cat{font-size:0.7rem;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem;}
+.tip-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:0.4rem;}
+.tip-body{font-size:0.81rem;color:var(--muted);line-height:1.65;}
+.tip-lvl{display:inline-block;padding:0.12rem 0.45rem;border-radius:4px;font-size:0.62rem;font-weight:700;margin-top:0.5rem;text-transform:uppercase;}
+.easy{background:rgba(0,230,118,0.12);color:var(--success);}
+.medium{background:rgba(255,160,0,0.12);color:var(--warning);}
+.hard{background:rgba(255,23,68,0.12);color:var(--danger);}
+
+/* ==================== ANALYTICS ==================== */
+.analytics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.9rem;margin-bottom:1.2rem;}
+.ac{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem;text-align:center;}
+.ac-num{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;line-height:1;}
+.ac-lbl{font-size:0.72rem;color:var(--muted);margin-top:0.3rem;}
+.ac-trend{font-size:0.75rem;font-weight:600;margin-top:0.2rem;}
+.up{color:var(--success);}.down{color:var(--danger);}.same{color:var(--warning);}
+.bar-rows{display:flex;flex-direction:column;gap:0.65rem;}
+.bar-row{display:flex;align-items:center;gap:0.65rem;}
+.bar-lbl{font-size:0.8rem;font-weight:600;width:110px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-wrap{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width 1s ease;}
+.bar-pct{font-size:0.75rem;font-weight:700;width:34px;text-align:right;flex-shrink:0;}
+.grade-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:0.5rem;margin-top:0.8rem;}
+.grade-item{background:var(--surface2);border-radius:8px;padding:0.6rem;text-align:center;}
+.grade-letter{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;}
+.grade-cnt{font-size:0.68rem;color:var(--muted);}
+
+/* ==================== LEADERBOARD ==================== */
+.lb-state{margin-bottom:0.5rem;}
+.lb-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-bottom:0.5rem;}
+.lb-choice{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.3rem;text-align:center;cursor:pointer;transition:all 0.25s;}
+.lb-choice:hover{border-color:var(--accent);transform:translateY(-3px);}
+.lb-choice.create:hover{border-color:var(--accent);}
+.lb-choice.join:hover{border-color:var(--accent2);}
+.lb-choice-icon{font-size:2rem;margin-bottom:0.5rem;}
+.lb-choice-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:0.25rem;}
+.lb-choice-sub{font-size:0.75rem;color:var(--muted);}
+.lb-form{background:var(--surface2);border-radius:14px;padding:1.3rem;margin-bottom:1rem;display:none;}
+.lb-form.show{display:block;}
+.lb-field{margin-bottom:0.85rem;}
+.lb-field label{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:0.4rem;}
+.lb-field input{width:100%;padding:0.65rem 0.9rem;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+.lb-field input:focus{border-color:var(--accent);}
+.lb-field input.code-input{font-family:'Syne',sans-serif;font-size:1.2rem;text-align:center;letter-spacing:4px;text-transform:uppercase;}
+.lb-form-btns{display:flex;gap:0.65rem;}
+.lb-confirm{flex:1;padding:0.7rem;background:linear-gradient(135deg,var(--accent),#8b5cf6);border:none;border-radius:10px;color:#fff;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.lb-cancel{padding:0.7rem 1.1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;}
+/* Active group */
+.lb-active{display:none;}
+.lb-active.show{display:block;}
+.lb-group-header{background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(0,217,192,0.06));border:1px solid rgba(108,99,255,0.2);border-radius:14px;padding:1.2rem;margin-bottom:1rem;}
+.lb-group-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:0.4rem;}
+.lb-code-row{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.5rem;}
+.lb-code{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:4px;color:var(--accent);cursor:pointer;background:var(--bg2);padding:0.3rem 0.8rem;border-radius:8px;border:1px solid var(--border);}
+.lb-copy-btn{background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);color:var(--accent);padding:0.3rem 0.75rem;border-radius:8px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.lb-copy-btn:hover{background:rgba(108,99,255,0.2);}
+.lb-hint{font-size:0.78rem;color:var(--muted);line-height:1.5;}
+.lb-actions{display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;}
+.lb-refresh-btn{background:rgba(0,217,192,0.1);border:1px solid rgba(0,217,192,0.2);color:var(--accent2);padding:0.38rem 0.85rem;border-radius:8px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.lb-leave-btn{background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.2);color:var(--accent3);padding:0.38rem 0.85rem;border-radius:8px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.lb-list{display:flex;flex-direction:column;gap:0.55rem;}
+.lb-item{display:flex;align-items:center;gap:0.85rem;padding:0.85rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:all 0.2s;}
+.lb-item:hover{border-color:rgba(108,99,255,0.25);}
+.lb-item.me{border-color:rgba(108,99,255,0.4);background:rgba(108,99,255,0.06);}
+.lb-rank{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;width:28px;text-align:center;flex-shrink:0;}
+.r1{color:gold;}.r2{color:silver;}.r3{color:#cd7f32;}
+.lb-ava{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;background:rgba(108,99,255,0.12);}
+.lb-info{flex:1;}
+.lb-name{font-weight:600;font-size:0.88rem;}
+.lb-branch{font-size:0.72rem;color:var(--muted);}
+.lb-score{font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;color:var(--accent);}
+.lb-updated{font-size:0.73rem;color:var(--muted);text-align:center;margin-top:0.6rem;}
+.lb-empty{color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;}
+
+/* ==================== EMAIL ==================== */
+.email-preview{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;font-family:monospace;font-size:0.8rem;color:var(--muted);max-height:180px;overflow-y:auto;white-space:pre-wrap;line-height:1.6;margin:0.8rem 0;}
+
+/* ==================== PWA ==================== */
+.pwa-hero{background:linear-gradient(135deg,rgba(108,99,255,0.12),rgba(0,217,192,0.08));border:1px solid rgba(108,99,255,0.22);border-radius:16px;padding:1.8rem;text-align:center;margin-bottom:1rem;}
+.pwa-icon{font-size:3rem;margin-bottom:0.6rem;}
+.pwa-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;margin-bottom:0.4rem;}
+.pwa-desc{color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:1rem;max-width:500px;margin-left:auto;margin-right:auto;}
+.install-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;border:none;padding:0.85rem 2rem;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.install-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px var(--glow);}
+.pwa-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.8rem;margin-top:1rem;}
+.pwa-step{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;}
+.pwa-step-num{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;margin:0 auto 0.5rem;}
+.pwa-step-text{font-size:0.78rem;color:var(--muted);line-height:1.5;}
+
+/* ==================== TOAST ==================== */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(15,15,35,0.96);color:var(--text);padding:0.7rem 1.4rem;border-radius:12px;font-size:0.84rem;z-index:99999;backdrop-filter:blur(12px);border:1px solid var(--border);transition:transform 0.3s,opacity 0.3s;opacity:0;text-align:center;max-width:90vw;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+/* MOBILE */
+@media(max-width:640px){
+  nav{padding:0.75rem 1rem;}
+  .page{padding:1.2rem 0.9rem 4rem;}
+  .prof-grid{grid-template-columns:1fr;}
+  .lb-choice-grid{grid-template-columns:1fr;}
+  .analytics-grid{grid-template-columns:repeat(2,1fr);}
+  .tips-grid{grid-template-columns:1fr;}
+  .pwa-steps{grid-template-columns:1fr 1fr;}
+  .pom-circle-wrap{width:170px;height:170px;}
+  .pom-time{font-size:2.2rem;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">NeuralPrep</a>
+  <div class="nav-right">
+    <a href="planner.html">Planner</a>
+    <a href="results.html">Results</a>
+    <a href="dashboard.html">Dashboard</a>
+    <button class="nbtn" onclick="toggleTheme()">🌓 Theme</button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="page">
+  <!-- PAGE HERO -->
+  <div class="page-hero">
+    <h1>⚡ Extra Features</h1>
+    <p>AI Chatbot, Pomodoro Timer, Mental Health Tracker, Student Profile, Study Tips, Score Analytics, Real Leaderboard, Email Plan & PWA Install</p>
+    <div class="hero-badges">
+      <span class="hero-badge">🤖 Gemini AI Powered</span>
+      <span class="hero-badge teal">🏆 Real Group Leaderboard</span>
+      <span class="hero-badge red">📲 Installable PWA</span>
+    </div>
+  </div>
+
+  <!-- TABS — data-tab attribute used for reliable switching -->
+  <div class="tabs-wrap" id="tabsWrap">
+    <button class="tab-btn active" data-tab="chat">🤖 AI Chat</button>
+    <button class="tab-btn" data-tab="pomodoro">⏱️ Pomodoro</button>
+    <button class="tab-btn" data-tab="health">❤️ Health</button>
+    <button class="tab-btn" data-tab="profile">🎓 Profile</button>
+    <button class="tab-btn" data-tab="tips">🎯 Tips</button>
+    <button class="tab-btn" data-tab="analytics">📊 Analytics</button>
+    <button class="tab-btn" data-tab="leaderboard">🏆 Leaderboard</button>
+    <button class="tab-btn" data-tab="email">📧 Email</button>
+    <button class="tab-btn" data-tab="pwa">📲 Install</button>
+  </div>
+
+  <!-- ==================== AI CHAT PANEL ==================== -->
+  <div class="panel active" id="panel-chat">
+    <div class="card">
+      <div class="card-title">🤖 NeuralPrep AI Assistant <span class="ctag">Gemini AI</span></div>
+      <div style="background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.2);border-radius:10px;padding:0.65rem 1rem;margin-bottom:0.9rem;font-size:0.82rem;color:var(--success);">
+        ✅ Powered by Google Gemini AI — Ask anything about your subjects or exams!
+      </div>
+      <div class="suggestions" id="suggestions">
+        <span class="sug">💡 Give me study tips</span>
+        <span class="sug">😰 I'm stressed about exams</span>
+        <span class="sug">⏰ How to manage study time</span>
+        <span class="sug">🧠 How to improve memory</span>
+        <span class="sug">📝 Explain Linear Regression</span>
+        <span class="sug">📊 Explain SQL joins</span>
+        <span class="sug">🔢 Explain Laplace Transform</span>
+      </div>
+      <div class="chat-box" id="chatBox">
+        <div class="msg bot">👋 Hi! I'm NeuralPrep AI. I can explain subject concepts, give study tips, help with exam strategy and manage stress. Ask me anything! 📚</div>
+      </div>
+      <div class="chat-row">
+        <input class="chat-input" id="chatInput" placeholder="Ask about any topic, concept, or study help..."/>
+        <button class="send-btn" id="sendBtn" onclick="sendMsg()">Send ➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== POMODORO PANEL ==================== -->
+  <div class="panel" id="panel-pomodoro">
+    <div class="card">
+      <div class="card-title">⏱️ Pomodoro Focus Timer</div>
+      <div class="pom-modes">
+        <button class="pom-mode active" data-mins="25" data-mode="focus" onclick="setPomMode(this)">🍅 Focus (25m)</button>
+        <button class="pom-mode" data-mins="5" data-mode="short" onclick="setPomMode(this)">☕ Short Break (5m)</button>
+        <button class="pom-mode" data-mins="15" data-mode="long" onclick="setPomMode(this)">🌿 Long Break (15m)</button>
+      </div>
+      <div class="pom-wrap">
+        <div class="pom-circle-wrap">
+          <svg class="pom-svg" viewBox="0 0 200 200">
+            <circle class="ring-bg" cx="100" cy="100" r="90"/>
+            <circle class="ring-fill" id="pomRing" cx="100" cy="100" r="90"/>
+          </svg>
+          <div class="pom-inner">
+            <div class="pom-time" id="pomTime">25:00</div>
+            <div class="pom-lbl" id="pomLbl">Focus Session</div>
+          </div>
+        </div>
+        <div class="pom-dots" id="pomDots">
+          <div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div>
+        </div>
+        <div class="pom-subj">
+          <input id="pomSubj" placeholder="What are you studying? (optional)"/>
+        </div>
+        <div class="pom-btns">
+          <button class="pb pb-start" id="pomBtn" onclick="togglePom()">▶ Start</button>
+          <button class="pb pb-reset" onclick="resetPom()">↺ Reset</button>
+          <button class="pb pb-skip" onclick="skipPom()">⏭ Skip</button>
+        </div>
+      </div>
+      <div class="card-title" style="margin-top:0.5rem">📋 Session Log</div>
+      <div class="pom-log" id="pomLog">
+        <div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:0.5rem">No sessions yet. Start a Pomodoro!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HEALTH PANEL ==================== -->
+  <div class="panel" id="panel-health">
+    <div class="card">
+      <div class="card-title">❤️ Daily Mental Health Check-in</div>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">Check in daily to track your wellbeing and get personalized advice.</p>
+      <div class="mh-q">How stressed do you feel about your upcoming exams?</div>
+      <div class="mh-opts">
+        <div class="mh-opt" onclick="checkMH(this,1)">😊<div class="mh-opt-lbl">Very Calm</div></div>
+        <div class="mh-opt" onclick="checkMH(this,2)">🙂<div class="mh-opt-lbl">Okay</div></div>
+        <div class="mh-opt" onclick="checkMH(this,3)">😐<div class="mh-opt-lbl">Neutral</div></div>
+        <div class="mh-opt" onclick="checkMH(this,4)">😟<div class="mh-opt-lbl">Stressed</div></div>
+        <div class="mh-opt" onclick="checkMH(this,5)">😰<div class="mh-opt-lbl">Very Stressed</div></div>
+      </div>
+      <div class="mh-result" id="mhResult"></div>
+      <div class="card-title">📅 Last 7 Days Wellbeing</div>
+      <div class="mh-grid" id="mhGrid"></div>
+      <div class="mh-hist" id="mhHist"></div>
+    </div>
+  </div>
+
+  <!-- ==================== PROFILE PANEL ==================== -->
+  <div class="panel" id="panel-profile">
+    <div class="card">
+      <div class="card-title">🎓 Student Profile</div>
+      <div class="avatar-wrap">
+        <div class="avatar" id="avatarEl" onclick="nextAvatar()">🎓</div>
+        <div class="avatar-hint">Tap to change avatar</div>
+      </div>
+      <div class="prof-grid">
+        <div class="pf"><label>Full Name</label><input id="pName" placeholder="Your name"/></div>
+        <div class="pf"><label>Roll Number</label><input id="pRoll" placeholder="21CS001"/></div>
+        <div class="pf"><label>Branch</label>
+          <select id="pBranch">
+            <option value="">Select Branch</option>
+            <option>CSE / IT</option><option>ECE / EEE</option><option>Mechanical</option>
+            <option>Civil</option><option>MBA / MCA</option><option>Other</option>
+          </select>
+        </div>
+        <div class="pf"><label>Semester</label>
+          <select id="pSem">
+            <option value="">Select Semester</option>
+            <option>1st</option><option>2nd</option><option>3rd</option><option>4th</option>
+            <option>5th</option><option>6th</option><option>7th</option><option>8th</option>
+          </select>
+        </div>
+        <div class="pf"><label>College</label><input id="pCollege" placeholder="College name"/></div>
+        <div class="pf"><label>Target GPA (out of 10)</label><input id="pGPA" type="number" min="0" max="10" step="0.1" placeholder="8.5"/></div>
+      </div>
+      <button class="btn-save" onclick="saveProfile()">💾 Save Profile</button>
+      <div class="prof-stats" id="profStats" style="display:none">
+        <div class="ps"><div class="ps-num" id="psSt">0</div><div class="ps-lbl">Day Streak</div></div>
+        <div class="ps"><div class="ps-num" id="psAvg">-</div><div class="ps-lbl">Avg Score</div></div>
+        <div class="ps"><div class="ps-num" id="psGPA">-</div><div class="ps-lbl">Target GPA</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TIPS PANEL ==================== -->
+  <div class="panel" id="panel-tips">
+    <div class="card">
+      <div class="card-title">🎯 Personalized Study Tips</div>
+      <div class="tips-filter">
+        <button class="tf active" data-cat="all" onclick="filterTips(this)">All</button>
+        <button class="tf" data-cat="critical" onclick="filterTips(this)">🚨 For Weak Subjects</button>
+        <button class="tf" data-cat="memory" onclick="filterTips(this)">🧠 Memory</button>
+        <button class="tf" data-cat="exam" onclick="filterTips(this)">📝 Exam Day</button>
+        <button class="tf" data-cat="focus" onclick="filterTips(this)">🎯 Focus</button>
+      </div>
+      <div class="tips-grid" id="tipsGrid"></div>
+    </div>
+  </div>
+
+  <!-- ==================== ANALYTICS PANEL ==================== -->
+  <div class="panel" id="panel-analytics">
+    <div class="card">
+      <div class="card-title">📊 Smart Score Analytics</div>
+      <div class="analytics-grid" id="analyticsGrid">
+        <div style="color:var(--muted);font-size:0.85rem;grid-column:1/-1">Generate a study plan first to see analytics!</div>
+      </div>
+      <div class="card-title">📈 Subject Performance</div>
+      <div class="bar-rows" id="barRows"></div>
+      <div class="card-title" style="margin-top:1rem">🎓 Grade Breakdown</div>
+      <div class="grade-grid" id="gradeGrid"></div>
+    </div>
+  </div>
+
+  <!-- ==================== LEADERBOARD PANEL ==================== -->
+  <div class="panel" id="panel-leaderboard">
+    <div class="card">
+      <div class="card-title">🏆 Real-Time Group Leaderboard</div>
+      <p style="color:var(--muted);font-size:0.83rem;margin-bottom:1.2rem;">Create a group, share the 6-digit code with friends. When they join using your code, everyone's scores appear on the leaderboard instantly! No fake data — 100% real.</p>
+
+      <!-- Choice -->
+      <div class="lb-state" id="lbChoice">
+        <div class="lb-choice-grid">
+          <div class="lb-choice create" onclick="showLBForm('create')">
+            <div class="lb-choice-icon">➕</div>
+            <div class="lb-choice-title">Create Group</div>
+            <div class="lb-choice-sub">Start a new study group</div>
+          </div>
+          <div class="lb-choice join" onclick="showLBForm('join')">
+            <div class="lb-choice-icon">🔗</div>
+            <div class="lb-choice-title">Join Group</div>
+            <div class="lb-choice-sub">Enter a friend's code</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Form -->
+      <div class="lb-form" id="lbCreateForm">
+        <div class="lb-field"><label>Group Name</label><input id="lbGroupName" placeholder="e.g. CSE Section A 2024"/></div>
+        <div class="lb-field"><label>Your Name</label><input id="lbCreateName" placeholder="Your name"/></div>
+        <div class="lb-form-btns">
+          <button class="lb-confirm" onclick="createGroup()">✅ Create Group</button>
+          <button class="lb-cancel" onclick="hideLBForms()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Join Form -->
+      <div class="lb-form" id="lbJoinForm">
+        <div class="lb-field"><label>Group Code (6 characters)</label><input class="code-input" id="lbJoinCode" maxlength="6" placeholder="ABC123" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="lb-field"><label>Your Name</label><input id="lbJoinName" placeholder="Your name"/></div>
+        <div class="lb-form-btns">
+          <button class="lb-confirm" style="background:linear-gradient(135deg,var(--accent2),#00bfa5);color:#000" onclick="joinGroupReal()">🔗 Join Group</button>
+          <button class="lb-cancel" onclick="hideLBForms()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Active Group -->
+      <div class="lb-active" id="lbActive">
+        <div class="lb-group-header">
+          <div class="lb-group-name" id="lbGName">Group Name</div>
+          <div class="lb-code-row">
+            <div class="lb-code" id="lbCode" onclick="copyLBCode()">------</div>
+            <button class="lb-copy-btn" onclick="copyLBCode()">📋 Copy Code</button>
+          </div>
+          <div class="lb-hint">Share this code with friends → Features → Leaderboard → Join Group → Enter: <strong id="lbCodeHint">------</strong></div>
+          <div class="lb-actions">
+            <button class="lb-refresh-btn" onclick="refreshLB()">🔄 Refresh</button>
+            <button class="lb-leave-btn" onclick="leaveGroup()">🚪 Leave Group</button>
+          </div>
+        </div>
+        <div class="lb-list" id="lbList"></div>
+        <div class="lb-updated" id="lbUpdated"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EMAIL PANEL ==================== -->
+  <div class="panel" id="panel-email">
+    <div class="card">
+      <div class="card-title">📧 Email My Study Plan</div>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">Send your complete study roadmap to your email. Opens your Gmail or Outlook app!</p>
+      <div class="pf" style="margin-bottom:0.8rem"><label>Your Email Address</label><input id="emailTo" type="email" placeholder="you@gmail.com"/></div>
+      <div class="pf" style="margin-bottom:0.8rem"><label>Subject Line</label><input id="emailSubj" value="My NeuralPrep Study Plan 📚"/></div>
+      <div class="card-title" style="font-size:0.85rem;margin-bottom:0.4rem">Preview:</div>
+      <div class="email-preview" id="emailPreview">Generate a study plan first to see preview...</div>
+      <button class="btn-save" onclick="sendEmail()" style="margin-top:0.75rem">📧 Open in Email App</button>
+      <p style="color:var(--muted);font-size:0.75rem;text-align:center;margin-top:0.6rem">Opens Gmail/Outlook with the plan pre-filled ✅</p>
+    </div>
+  </div>
+
+  <!-- ==================== PWA PANEL ==================== -->
+  <div class="panel" id="panel-pwa">
+    <div class="card">
+      <div class="pwa-hero">
+        <div class="pwa-icon">📲</div>
+        <div class="pwa-title">Install NeuralPrep as an App!</div>
+        <div class="pwa-desc">Get NeuralPrep on your phone's home screen. Works offline, loads instantly, feels like a native app — completely free!</div>
+        <button class="install-btn" id="installBtn" onclick="installPWA()">⬇️ Install App</button>
+        <p id="installStatus" style="color:var(--muted);font-size:0.78rem;margin-top:0.6rem"></p>
+      </div>
+      <div class="card-title">📖 Manual Install Steps</div>
+      <div class="pwa-steps">
+        <div class="pwa-step"><div class="pwa-step-num">1</div><div class="pwa-step-text"><strong>Android Chrome:</strong> Tap ⋮ menu → "Add to Home Screen" → Install</div></div>
+        <div class="pwa-step"><div class="pwa-step-num">2</div><div class="pwa-step-text"><strong>iPhone Safari:</strong> Tap Share □↑ → "Add to Home Screen" → Add</div></div>
+        <div class="pwa-step"><div class="pwa-step-num">3</div><div class="pwa-step-text"><strong>Desktop Chrome:</strong> Click ⊕ in address bar → Install</div></div>
+        <div class="pwa-step"><div class="pwa-step-num">4</div><div class="pwa-step-text"><strong>After install:</strong> Open from home screen — works offline too! 🎉</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .page -->
+
+<script>
+'use strict';
+
+// ==================== THEME ====================
+function toggleTheme(){
+  const h=document.documentElement;
+  h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';
+  localStorage.setItem('theme',h.dataset.theme);
+}
+(function(){const t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t;})();
+
+// ==================== TOAST ====================
+function toast(msg,ms=3200){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms);
+}
+
+// ==================== TABS — Simple & Reliable ====================
+document.getElementById('tabsWrap').addEventListener('click',function(e){
+  const btn=e.target.closest('.tab-btn');
+  if(!btn) return;
+  const tab=btn.dataset.tab;
+  if(!tab) return;
+  // Update buttons
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Update panels
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById('panel-'+tab);
+  if(panel) panel.classList.add('active');
+  // Tab-specific init
+  if(tab==='analytics') renderAnalytics();
+  if(tab==='email') buildEmailPreview();
+  if(tab==='leaderboard') initLB();
+});
+
+// ==================== AI CHATBOT ====================
+let chatHistory=[];
+
+document.getElementById('suggestions').addEventListener('click',function(e){
+  const s=e.target.closest('.sug');
+  if(!s) return;
+  document.getElementById('chatInput').value=s.textContent.trim();
+  sendMsg();
+});
+
+document.getElementById('chatInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter') sendMsg();
+});
+
+async function sendMsg(){
+  const inp=document.getElementById('chatInput');
+  const msg=inp.value.trim();
+  if(!msg) return;
+  inp.value='';
+  addMsg(msg,'user');
+  chatHistory.push({role:'user',text:msg});
+
+  const btn=document.getElementById('sendBtn');
+  btn.disabled=true;
+  const tid='t'+Date.now();
+  addMsg('⏳ Thinking...','bot typing-indicator',tid);
+
+  try{
+    const res=await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:msg,subject:getCriticalSubjects(),context:getPlanContext(),history:chatHistory.slice(-6)})
+    });
+    const d=await res.json();
+    document.getElementById(tid)?.remove();
+    const reply=d.reply||'Sorry, could not get a response. Please try again.';
+    addMsg(reply,'bot');
+    chatHistory.push({role:'model',text:reply});
+    if(chatHistory.length>20) chatHistory=chatHistory.slice(-16);
+  }catch{
+    document.getElementById(tid)?.remove();
+    addMsg('⚠️ Connection error. Make sure the server is running and try again.','bot');
+  }
+  btn.disabled=false;
+}
+
+function addMsg(text,cls,id=''){
+  const box=document.getElementById('chatBox');
+  const d=document.createElement('div');
+  d.className='msg '+cls;
+  if(id) d.id=id;
+  d.innerHTML=text.replace(/\n/g,'<br>');
+  box.appendChild(d);
+  box.scrollTop=box.scrollHeight;
+}
+
+function getCriticalSubjects(){
+  const plan=JSON.parse(sessionStorage.getItem('planResult')||'{}');
+  return plan.predictions?.filter(p=>p.predicted/p.maxMark<0.45).map(p=>p.subject).join(', ')||'';
+}
+
+function getPlanContext(){
+  const plan=JSON.parse(sessionStorage.getItem('planResult')||'{}');
+  if(!plan.predictions) return '';
+  const avg=Math.round(plan.predictions.reduce((a,p)=>a+p.predicted/p.maxMark*100,0)/plan.predictions.length);
+  return `Student has ${plan.predictions.length} subjects. Average: ${avg}%. Subjects: ${plan.predictions.map(p=>p.subject+'('+Math.round(p.predicted/p.maxMark*100)+'%)').join(', ')}`;
+}
+
+// ==================== POMODORO ====================
+let pomSecs=25*60,pomTotal=25*60,pomRunning=false,pomTimer=null,pomDone=0,pomMode='focus';
+const pomLog=[];
+
+function setPomMode(btn){
+  if(pomRunning) return;
+  document.querySelectorAll('.pom-mode').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  pomMode=btn.dataset.mode;
+  const mins=parseInt(btn.dataset.mins);
+  pomSecs=pomTotal=mins*60;
+  const colors={focus:'var(--accent)',short:'var(--accent2)',long:'var(--success)'};
+  document.getElementById('pomRing').style.stroke=colors[pomMode];
+  document.getElementById('pomLbl').textContent=pomMode==='focus'?'Focus Session':pomMode==='short'?'Short Break':'Long Break';
+  updatePomDisplay();
+}
+
+function togglePom(){
+  if(pomRunning){
+    clearInterval(pomTimer);pomRunning=false;
+    document.getElementById('pomBtn').textContent='▶ Resume';
+  }else{
+    pomRunning=true;
+    document.getElementById('pomBtn').textContent='⏸ Pause';
+    pomTimer=setInterval(()=>{
+      pomSecs--;updatePomDisplay();
+      if(pomSecs<=0){clearInterval(pomTimer);pomRunning=false;onPomComplete();}
+    },1000);
+  }
+}
+
+function updatePomDisplay(){
+  const m=Math.floor(pomSecs/60).toString().padStart(2,'0');
+  const s=(pomSecs%60).toString().padStart(2,'0');
+  document.getElementById('pomTime').textContent=`${m}:${s}`;
+  const circ=2*Math.PI*90;
+  document.getElementById('pomRing').style.strokeDasharray=circ;
+  document.getElementById('pomRing').style.strokeDashoffset=circ*(1-pomSecs/pomTotal);
+}
+
+function onPomComplete(){
+  document.getElementById('pomBtn').textContent='▶ Start';
+  pomSecs=pomTotal;updatePomDisplay();
+  if(pomMode==='focus'){
+    pomDone=(pomDone+1)%5;
+    document.querySelectorAll('.pdot').forEach((d,i)=>d.classList.toggle('done',i<pomDone));
+    const subj=document.getElementById('pomSubj').value||'General Study';
+    pomLog.unshift({subj,time:new Date().toLocaleTimeString()});
+    renderPomLog();
+  }
+  toast(pomMode==='focus'?'🍅 Session complete! Take a break!':'☕ Break over! Ready to focus?');
+}
+
+function resetPom(){clearInterval(pomTimer);pomRunning=false;pomSecs=pomTotal;updatePomDisplay();document.getElementById('pomBtn').textContent='▶ Start';}
+function skipPom(){clearInterval(pomTimer);pomRunning=false;onPomComplete();}
+
+function renderPomLog(){
+  const el=document.getElementById('pomLog');
+  if(!pomLog.length){el.innerHTML='<div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:0.5rem">No sessions yet.</div>';return;}
+  el.innerHTML=pomLog.slice(0,8).map(l=>`<div class="plog-item"><span>🍅 ${l.subj}</span><span>${l.time}</span></div>`).join('');
+}
+updatePomDisplay();
+
+// ==================== MENTAL HEALTH ====================
+const mhData=JSON.parse(localStorage.getItem('mhData')||'[]');
+const mhTips={
+  1:'😊 Great mindset! Keep this calm energy going. Regular sleep (7-8 hrs) and light exercise help maintain it during exam week.',
+  2:'🙂 You\'re doing well! Stay consistent with your study schedule. Celebrate small wins like finishing a chapter.',
+  3:'😐 Feeling neutral is okay. Try breaking sessions into 25-min Pomodoros. Reward yourself after each one!',
+  4:'😟 Stressed is normal! Try: 5 deep breaths (inhale 4 counts, hold 4, exhale 6), a 10-min walk, then return. One subject at a time.',
+  5:'😰 High stress! Please take a 30-min break RIGHT NOW. Walk outside, call a friend, or just rest. Your brain needs it. You\'re more than your marks!'
+};
+
+function checkMH(el,score){
+  document.querySelectorAll('.mh-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  const colors=['','#00e676','#69f0ae','#ffa000','#ff6b6b','#ff1744'];
+  const labels=['','Very Calm','Okay','Neutral','Stressed','Very Stressed'];
+  const r=document.getElementById('mhResult');
+  r.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:0.5rem"><strong>Wellbeing: ${labels[score]}</strong><span style="color:${colors[score]};font-weight:700">${score}/5</span></div><div class="mh-bar-wrap"><div class="mh-bar" style="width:${score*20}%;background:${colors[score]}"></div></div><div class="mh-tip">${mhTips[score]}</div>`;
+  r.classList.add('show');
+  const today=new Date().toLocaleDateString();
+  const idx=mhData.findIndex(d=>d.date===today);
+  const entry={date:today,score,label:labels[score]};
+  if(idx>=0)mhData[idx]=entry;else mhData.unshift(entry);
+  if(mhData.length>30)mhData.pop();
+  localStorage.setItem('mhData',JSON.stringify(mhData));
+  renderMHGrid();
+}
+
+function renderMHGrid(){
+  const colors=['','#00e676','#69f0ae','#ffa000','#ff6b6b','#ff1744'];
+  const grid=document.getElementById('mhGrid');
+  const hist=document.getElementById('mhHist');
+  grid.innerHTML='';
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toLocaleDateString();
+    const e=mhData.find(m=>m.date===ds);
+    const cell=document.createElement('div');
+    cell.className='mh-cell';
+    cell.style.background=e?colors[e.score]:'var(--border)';
+    cell.style.opacity=e?'1':'0.3';
+    cell.title=e?`${ds}: ${e.label}`:`${ds}: No check-in`;
+    grid.appendChild(cell);
+  }
+  hist.innerHTML=mhData.slice(0,5).map(d=>`<div class="mh-hist-item"><span>${d.date}</span><span style="color:var(--muted)">${d.label}</span><span>${['','😊','🙂','😐','😟','😰'][d.score]}</span></div>`).join('');
+}
+renderMHGrid();
+
+// ==================== PROFILE ====================
+const avatars=['🎓','👨‍💻','👩‍💻','🧑‍🔬','👨‍🎓','👩‍🎓','🦸','🌟','💪','🚀'];
+let avatarIdx=0;
+
+function nextAvatar(){
+  avatarIdx=(avatarIdx+1)%avatars.length;
+  document.getElementById('avatarEl').textContent=avatars[avatarIdx];
+}
+
+function saveProfile(){
+  const p={name:document.getElementById('pName').value,roll:document.getElementById('pRoll').value,branch:document.getElementById('pBranch').value,sem:document.getElementById('pSem').value,college:document.getElementById('pCollege').value,gpa:document.getElementById('pGPA').value,avatar:avatars[avatarIdx]};
+  localStorage.setItem('studentProfile',JSON.stringify(p));
+  toast('✅ Profile saved!');
+  loadProfile();
+}
+
+function loadProfile(){
+  const p=JSON.parse(localStorage.getItem('studentProfile')||'{}');
+  if(!p.name) return;
+  document.getElementById('pName').value=p.name||'';
+  document.getElementById('pRoll').value=p.roll||'';
+  document.getElementById('pBranch').value=p.branch||'';
+  document.getElementById('pSem').value=p.sem||'';
+  document.getElementById('pCollege').value=p.college||'';
+  document.getElementById('pGPA').value=p.gpa||'';
+  if(p.avatar){const idx=avatars.indexOf(p.avatar);if(idx>=0)avatarIdx=idx;document.getElementById('avatarEl').textContent=p.avatar;}
+  const streak=JSON.parse(localStorage.getItem('studiedDays')||'[]').length;
+  const plan=JSON.parse(sessionStorage.getItem('planResult')||'{}');
+  const avg=plan.predictions?Math.round(plan.predictions.reduce((a,pp)=>a+pp.predicted/pp.maxMark*100,0)/plan.predictions.length)+'%':'-';
+  document.getElementById('psSt').textContent=streak;
+  document.getElementById('psAvg').textContent=avg;
+  document.getElementById('psGPA').textContent=p.gpa||'-';
+  document.getElementById('profStats').style.display='grid';
+}
+loadProfile();
+
+// ==================== STUDY TIPS ====================
+const TIPS=[
+  {cat:'critical',emoji:'🔄',title:'Spaced Repetition',body:'Review material after: 1 day → 3 days → 1 week → 2 weeks. Each review strengthens memory. Best for weak subjects!',level:'hard'},
+  {cat:'critical',emoji:'📝',title:'Past Papers First',body:'Solve last 5 years papers for weak subjects. 70% of questions repeat. Focus on these patterns before reading theory.',level:'hard'},
+  {cat:'critical',emoji:'🗺️',title:'Mind Mapping',body:'Draw central topic, branch out key concepts. Use colors. Visual learners retain 65% more with mind maps vs linear notes.',level:'medium'},
+  {cat:'memory',emoji:'🧠',title:'Active Recall',body:'Close your book and write everything you remember. Then check. 3x better retention than re-reading the same page.',level:'medium'},
+  {cat:'memory',emoji:'✍️',title:'Write by Hand',body:'Handwriting engages more brain areas than typing. Write formulas and key points 5 times — becomes automatic memory.',level:'easy'},
+  {cat:'memory',emoji:'👥',title:'Teach to Learn',body:'Explain topics to a friend (or even a wall!). Research shows teaching improves retention to 90%. If you can explain it simply, you truly understand it.',level:'medium'},
+  {cat:'exam',emoji:'📋',title:'First 5 Minutes Rule',body:'Read all questions for 5 min. Mark: easy (E), medium (M), hard (H). Attempt E first, then M, then H. Builds momentum and confidence.',level:'easy'},
+  {cat:'exam',emoji:'⏰',title:'Time Boxing',body:'Total marks ÷ time = marks per minute. For 100 marks in 3 hours: 1.8 min/mark. 10-mark question = max 18 minutes. Move on if stuck!',level:'medium'},
+  {cat:'exam',emoji:'🧘',title:'Exam Morning Routine',body:'Wake 2 hours early. Light breakfast (banana, milk, nuts). Review formulas only — no new topics. Arrive 15 min early. Deep breathe before starting.',level:'easy'},
+  {cat:'focus',emoji:'🍅',title:'Pomodoro Technique',body:'25 min focused study → 5 min break. After 4 sessions → 20 min long break. Prevents burnout. Use the timer on this app!',level:'easy'},
+  {cat:'focus',emoji:'📵',title:'Phone in Another Room',body:'Not silent — another room! Each notification interruption costs 23 minutes of refocused attention. Distance is the only solution.',level:'easy'},
+  {cat:'focus',emoji:'🌙',title:'Sleep = Memory Storage',body:'Brain consolidates memories during deep sleep. Study important topics before sleep. 7-8 hours improves exam performance by up to 40%.',level:'easy'},
+];
+
+function filterTips(btn){
+  document.querySelectorAll('.tf').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTips(btn.dataset.cat);
+}
+
+function renderTips(cat='all'){
+  const filtered=cat==='all'?TIPS:TIPS.filter(t=>t.cat===cat);
+  document.getElementById('tipsGrid').innerHTML=filtered.map(t=>`<div class="tip-card"><div class="tip-emoji">${t.emoji}</div><div class="tip-cat">${t.cat}</div><div class="tip-title">${t.title}</div><div class="tip-body">${t.body}</div><span class="tip-lvl ${t.level}">${t.level}</span></div>`).join('');
+}
+renderTips();
+
+// ==================== ANALYTICS ====================
+function renderAnalytics(){
+  const plan=JSON.parse(sessionStorage.getItem('planResult')||'{}');
+  const grid=document.getElementById('analyticsGrid');
+  const bars=document.getElementById('barRows');
+  const gradeG=document.getElementById('gradeGrid');
+  if(!plan.predictions){
+    grid.innerHTML='<div style="color:var(--muted);font-size:0.85rem;grid-column:1/-1;text-align:center;padding:2rem">Generate a study plan first to see analytics!</div>';
+    bars.innerHTML='';gradeG.innerHTML='';return;
+  }
+  const preds=plan.predictions,max=preds[0]?.maxMark||100;
+  const avg=Math.round(preds.reduce((a,p)=>a+p.predicted,0)/preds.length);
+  const avgPct=Math.round(avg/max*100);
+  const passing=preds.filter(p=>p.predicted>=max*0.45).length;
+  const best=preds.reduce((a,b)=>a.predicted>b.predicted?a:b);
+  const worst=preds.reduce((a,b)=>a.predicted<b.predicted?a:b);
+  grid.innerHTML=[
+    {num:avgPct+'%',lbl:'Average Score',trend:avgPct>=75?'↑ Excellent':avgPct>=45?'→ Average':'↓ Needs Work',cls:avgPct>=75?'up':avgPct>=45?'same':'down',color:'var(--accent)'},
+    {num:`${passing}/${preds.length}`,lbl:'Subjects Passing',trend:'✅ On Track',cls:'up',color:'var(--success)'},
+    {num:`${best.predicted}/${max}`,lbl:'Best: '+best.subject,trend:'↑ Strongest',cls:'up',color:'var(--success)'},
+    {num:`${worst.predicted}/${max}`,lbl:'Focus: '+worst.subject,trend:'↓ Needs Attention',cls:'down',color:'var(--danger)'},
+  ].map(c=>`<div class="ac"><div class="ac-num" style="color:${c.color}">${c.num}</div><div class="ac-lbl">${c.lbl}</div><div class="ac-trend ${c.cls}">${c.trend}</div></div>`).join('');
+
+  const sorted=[...preds].sort((a,b)=>b.predicted-a.predicted);
+  bars.innerHTML=sorted.map(p=>{
+    const pct=Math.round(p.predicted/max*100);
+    const col=pct>=75?'#00e676':pct>=45?'#ffa000':'#ff1744';
+    return `<div class="bar-row"><div class="bar-lbl">${p.subject}</div><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div><div class="bar-pct" style="color:${col}">${pct}%</div></div>`;
+  }).join('');
+
+  const grades={O:0,'A+':0,A:0,'B+':0,B:0,C:0,P:0,F:0};
+  preds.forEach(p=>{const pct=p.predicted/max*100;if(pct>=90)grades.O++;else if(pct>=80)grades['A+']++;else if(pct>=70)grades.A++;else if(pct>=60)grades['B+']++;else if(pct>=50)grades.B++;else if(pct>=45)grades.C++;else if(pct>=35)grades.P++;else grades.F++;});
+  const gc={O:'#00e676','A+':'#69f0ae',A:'#00d9c0','B+':'#ffa000',B:'#ff9800',C:'#ff6b6b',P:'#9e9e9e',F:'#ff1744'};
+  gradeG.innerHTML=Object.entries(grades).filter(([,v])=>v>0).map(([g,c])=>`<div class="grade-item"><div class="grade-letter" style="color:${gc[g]}">${g}</div><div class="grade-cnt">${c} subj</div></div>`).join('');
+}
+
+// ==================== LEADERBOARD ====================
+const myMemberID=localStorage.getItem('lbMemberID')||(()=>{const id='m_'+Date.now();localStorage.setItem('lbMemberID',id);return id;})();
+let currentCode=localStorage.getItem('lbCode')||'';
+let lbTimer=null;
+
+function initLB(){
+  if(currentCode){
+    fetch('/api/leaderboard/'+currentCode)
+      .then(r=>r.json())
+      .then(d=>{if(d.group)showActiveGroup(d.group);else{currentCode='';localStorage.removeItem('lbCode');showLBDefault();}})
+      .catch(()=>showLBDefault());
+  }else{showLBDefault();}
+}
+
+function showLBDefault(){
+  document.getElementById('lbChoice').style.display='block';
+  document.getElementById('lbCreateForm').classList.remove('show');
+  document.getElementById('lbJoinForm').classList.remove('show');
+  document.getElementById('lbActive').classList.remove('show');
+}
+
+function showLBForm(type){
+  document.getElementById('lbChoice').style.display='none';
+  const p=JSON.parse(localStorage.getItem('studentProfile')||'{}');
+  if(type==='create'){
+    document.getElementById('lbCreateForm').classList.add('show');
+    document.getElementById('lbJoinForm').classList.remove('show');
+    if(p.name) document.getElementById('lbCreateName').value=p.name;
+  }else{
+    document.getElementById('lbJoinForm').classList.add('show');
+    document.getElementById('lbCreateForm').classList.remove('show');
+    if(p.name) document.getElementById('lbJoinName').value=p.name;
+  }
+}
+
+function hideLBForms(){
+  document.getElementById('lbCreateForm').classList.remove('show');
+  document.getElementById('lbJoinForm').classList.remove('show');
+  document.getElementById('lbChoice').style.display='block';
+}
+
+function getMyScore(){
+  const plan=JSON.parse(sessionStorage.getItem('planResult')||'{}');
+  if(!plan.predictions||!plan.predictions.length) return 0;
+  return Math.round(plan.predictions.reduce((a,p)=>a+p.predicted/p.maxMark*100,0)/plan.predictions.length);
+}
+
+async function createGroup(){
+  const name=document.getElementById('lbGroupName').value.trim();
+  const myName=document.getElementById('lbCreateName').value.trim();
+  if(!name) return toast('⚠️ Enter a group name!');
+  if(!myName) return toast('⚠️ Enter your name!');
+  const profile=JSON.parse(localStorage.getItem('studentProfile')||'{}');
+  try{
+    const r=await fetch('/api/leaderboard/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({groupName:name,memberName:myName,branch:profile.branch||'Student',avatar:profile.avatar||'🎓',avgScore:getMyScore(),memberId:myMemberID})});
+    const d=await r.json();
+    if(d.success){currentCode=d.code;localStorage.setItem('lbCode',currentCode);toast('✅ Group created! Share the code with friends!');showActiveGroup(d.group);}
+    else toast('❌ '+(d.error||'Failed'));
+  }catch{toast('❌ Server error. Is npm start running?');}
+}
+
+async function joinGroupReal(){
+  const code=document.getElementById('lbJoinCode').value.trim().toUpperCase();
+  const myName=document.getElementById('lbJoinName').value.trim();
+  if(code.length!==6) return toast('⚠️ Enter a 6-character code!');
+  if(!myName) return toast('⚠️ Enter your name!');
+  const profile=JSON.parse(localStorage.getItem('studentProfile')||'{}');
+  try{
+    const r=await fetch('/api/leaderboard/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,memberName:myName,branch:profile.branch||'Student',avatar:profile.avatar||'🎓',avgScore:getMyScore(),memberId:myMemberID})});
+    const d=await r.json();
+    if(d.success){currentCode=code;localStorage.setItem('lbCode',currentCode);toast('✅ Joined group: '+d.group.name+'!');showActiveGroup(d.group);}
+    else toast('❌ '+(d.error||'Group not found! Check the code.'));
+  }catch{toast('❌ Server error. Check your connection!');}
+}
+
+function showActiveGroup(group){
+  document.getElementById('lbChoice').style.display='none';
+  document.getElementById('lbCreateForm').classList.remove('show');
+  document.getElementById('lbJoinForm').classList.remove('show');
+  document.getElementById('lbActive').classList.add('show');
+  document.getElementById('lbGName').textContent='🏆 '+group.name;
+  document.getElementById('lbCode').textContent=group.code;
+  document.getElementById('lbCodeHint').textContent=group.code;
+  renderMembers(group.members);
+  if(lbTimer) clearInterval(lbTimer);
+  lbTimer=setInterval(refreshLB,15000);
+}
+
+function renderMembers(members){
+  const sorted=[...members].sort((a,b)=>b.avgScore-a.avgScore);
+  const list=document.getElementById('lbList');
+  if(!sorted.length){list.innerHTML='<div class="lb-empty">No members yet. Share the code!</div>';return;}
+  list.innerHTML=sorted.map((m,i)=>{
+    const isMe=m.id===myMemberID;
+    const rank=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1).toString();
+    const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    return `<div class="lb-item${isMe?' me':''}">
+      <div class="lb-rank ${rc}">${rank}</div>
+      <div class="lb-ava">${m.avatar||'🎓'}</div>
+      <div class="lb-info">
+        <div class="lb-name">${m.name}${isMe?' <span style="color:var(--accent);font-size:0.7rem">(You)</span>':''}${m.isCreator?' 👑':''}</div>
+        <div class="lb-branch">${m.branch||'Student'}</div>
+      </div>
+      <div class="lb-score">${m.avgScore||0}%</div>
+    </div>`;
+  }).join('');
+  document.getElementById('lbUpdated').textContent='Updated: '+new Date().toLocaleTimeString();
+}
+
+async function refreshLB(){
+  if(!currentCode) return;
+  try{const r=await fetch('/api/leaderboard/'+currentCode);const d=await r.json();if(d.group)renderMembers(d.group.members);}catch{}
+}
+
+function copyLBCode(){
+  const code=document.getElementById('lbCode').textContent;
+  navigator.clipboard.writeText(code).then(()=>toast('✅ Code "'+code+'" copied!')).catch(()=>toast('Your code: '+code));
+}
+
+async function leaveGroup(){
+  if(!confirm('Leave this group?')) return;
+  try{await fetch('/api/leaderboard/leave',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:currentCode,memberId:myMemberID})});}catch{}
+  currentCode='';localStorage.removeItem('lbCode');
+  if(lbTimer) clearInterval(lbTimer);
+  document.getElementById('lbActive').classList.remove('show');
+  showLBDefault();
+  toast('✅ Left the group');
+}
+
+// ==================== EMAIL ====================
+function buildEmailPreview(){
+  const plan=JSON.parse(sessionStorage.getItem('planResult')||'{}');
+  const el=document.getElementById('emailPreview');
+  if(!plan.predictions){el.textContent='Generate a study plan first to see preview...';return;}
+  let t=`📚 My NeuralPrep Study Plan\n${'='.repeat(40)}\nGenerated: ${new Date().toLocaleDateString()}\nMode: ${(plan.config?.examMode||'semester').toUpperCase()}\n\nPREDICTED SCORES:\n${'-'.repeat(30)}\n`;
+  plan.predictions.forEach(p=>{const pct=Math.round(p.predicted/p.maxMark*100);const s=pct>=75?'✅ EXCELLENT':pct>=45?'🟠 AVERAGE':'🚨 CRITICAL';t+=`• ${p.subject}: ${p.predicted}/${p.maxMark} (${pct}%) — ${s}\n`;});
+  t+=`\nGenerated by NeuralPrep — Smart Exam Scheduler`;
+  el.textContent=t;
+}
+
+async function sendEmail(){
+  const to=document.getElementById('emailTo').value;
+  const subj=document.getElementById('emailSubj').value||'My NeuralPrep Study Plan';
+  const plan=JSON.parse(sessionStorage.getItem('planResult')||'{}');
+  if(!plan.predictions) return toast('⚠️ Generate a study plan first!');
+  const body=document.getElementById('emailPreview').textContent;
+  try{
+    const r=await fetch('/api/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to,subject:subj,plan})});
+    const d=await r.json();
+    if(d.mailtoLink){window.location.href=d.mailtoLink;}
+    else{window.location.href=`mailto:${to}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;}
+    toast('📧 Opening email app...');
+  }catch{
+    window.location.href=`mailto:${to}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  }
+}
+
+// ==================== PWA ====================
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('installStatus').textContent='✅ Your browser supports installation!';
+});
+async function installPWA(){
+  if(deferredPrompt){const{outcome}=await deferredPrompt.prompt().then(()=>deferredPrompt.userChoice);deferredPrompt=null;toast(outcome==='accepted'?'🎉 App installed! Check home screen.':'💡 Use manual steps below to install.');}
+  else toast('💡 Use the manual steps below based on your device!');
+}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(()=>{document.getElementById('installStatus').textContent='✅ Offline support enabled!';}).catch(()=>{});
+}
+
+// ==================== INIT ====================
+window.addEventListener('load',()=>{
+  buildEmailPreview();
+  // Trigger analytics if already on that tab
+  if(document.querySelector('[data-tab="analytics"].active')) renderAnalytics();
+});
+</script>
+</body>
+</html>

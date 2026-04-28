@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NeuralPrep — Smart Exam Scheduler</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#0a0a1a"/>
+<style>
+/* ===================== VARIABLES ===================== */
+:root {
+  --bg: #06060f;
+  --bg2: #0d0d1f;
+  --glass: rgba(255,255,255,0.04);
+  --glass2: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #f0f0ff;
+  --muted: rgba(255,255,255,0.45);
+  --c1: #7c3aed; /* violet */
+  --c2: #ec4899; /* pink */
+  --c3: #06b6d4; /* cyan */
+  --c4: #f59e0b; /* amber */
+  --c5: #10b981; /* emerald */
+  --glow1: rgba(124,58,237,0.4);
+  --glow2: rgba(236,72,153,0.4);
+  --glow3: rgba(6,182,212,0.3);
+}
+[data-theme="light"] {
+  --bg: #f8f7ff;
+  --bg2: #ede8ff;
+  --glass: rgba(255,255,255,0.6);
+  --glass2: rgba(255,255,255,0.8);
+  --border: rgba(100,80,200,0.12);
+  --border2: rgba(100,80,200,0.22);
+  --text: #0f0a2e;
+  --muted: rgba(15,10,46,0.5);
+  --glow1: rgba(124,58,237,0.2);
+  --glow2: rgba(236,72,153,0.2);
+  --glow3: rgba(6,182,212,0.15);
+}
+
+/* ===================== RESET ===================== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  cursor:none;
+}
+a { text-decoration:none; color:inherit; }
+
+/* ===================== CURSOR ===================== */
+.cur {
+  width:16px; height:16px;
+  background:var(--c1);
+  border-radius:50%;
+  position:fixed; z-index:99999;
+  pointer-events:none;
+  mix-blend-mode:screen;
+  transition:transform 0.1s, width 0.2s, height 0.2s, background 0.3s;
+  transform:translate(-50%,-50%);
+}
+.cur2 {
+  width:44px; height:44px;
+  border:2px solid rgba(124,58,237,0.5);
+  border-radius:50%;
+  position:fixed; z-index:99998;
+  pointer-events:none;
+  transition:transform 0.15s ease, width 0.2s, height 0.2s, border-color 0.3s;
+  transform:translate(-50%,-50%);
+}
+body:hover .cur { opacity:1; }
+
+/* ===================== AMBIENT BLOBS ===================== */
+.blobs {
+  position:fixed; inset:0; z-index:0;
+  overflow:hidden; pointer-events:none;
+}
+.blob {
+  position:absolute;
+  border-radius:50%;
+  filter:blur(100px);
+  opacity:0.35;
+  animation:blobFloat 20s ease-in-out infinite;
+}
+[data-theme="light"] .blob { opacity:0.2; }
+.blob1 { width:600px; height:600px; background:#7c3aed; top:-200px; left:-100px; }
+.blob2 { width:500px; height:500px; background:#ec4899; bottom:-100px; right:-100px; }
+.blob3 { width:400px; height:400px; background:#06b6d4; top:40%; left:50%; }
+.blob4 { width:350px; height:350px; background:#10b981; bottom:20%; left:10%; }
+@keyframes blobFloat {
+  0%,100% { transform:translate(0,0) scale(1); }
+  25%     { transform:translate(60px,-40px) scale(1.05); }
+  50%     { transform:translate(-40px,60px) scale(0.95); }
+  75%     { transform:translate(30px,30px) scale(1.08); }
+}
+
+/* ===================== SMOOTH COLOR SHIFT (Google-style flowing) ===================== */
+/* Each blob shifts through different color palette smoothly */
+@keyframes blob1Color {
+  0%   { background: #7c3aed; }
+  25%  { background: #2563eb; }
+  50%  { background: #0891b2; }
+  75%  { background: #059669; }
+  100% { background: #7c3aed; }
+}
+@keyframes blob2Color {
+  0%   { background: #ec4899; }
+  25%  { background: #f97316; }
+  50%  { background: #eab308; }
+  75%  { background: #dc2626; }
+  100% { background: #ec4899; }
+}
+@keyframes blob3Color {
+  0%   { background: #06b6d4; }
+  25%  { background: #8b5cf6; }
+  50%  { background: #10b981; }
+  75%  { background: #3b82f6; }
+  100% { background: #06b6d4; }
+}
+@keyframes blob4Color {
+  0%   { background: #10b981; }
+  25%  { background: #a855f7; }
+  50%  { background: #f59e0b; }
+  75%  { background: #06b6d4; }
+  100% { background: #10b981; }
+}
+.blob1 { animation: blobFloat 20s ease-in-out infinite, blob1Color 18s ease-in-out infinite !important; }
+.blob2 { animation: blobFloat 20s ease-in-out infinite, blob2Color 22s ease-in-out infinite !important; animation-delay: -7s, -5s !important; }
+.blob3 { animation: blobFloat 20s ease-in-out infinite, blob3Color 16s ease-in-out infinite !important; animation-delay: -14s, -10s !important; }
+.blob4 { animation: blobFloat 20s ease-in-out infinite, blob4Color 20s ease-in-out infinite !important; animation-delay: -3s, -8s !important; }
+
+/* ===================== NOISE OVERLAY ===================== */
+body::after {
+  content:'';
+  position:fixed; inset:0; z-index:1;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events:none;
+  opacity:0.4;
+}
+
+/* ===================== NAV ===================== */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:1000;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1rem 3rem;
+  background:rgba(6,6,15,0.6);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+}
+[data-theme="light"] nav { background:rgba(248,247,255,0.7); }
+.logo {
+  font-family:'Syne',sans-serif;
+  font-weight:900; font-size:1.5rem;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+  letter-spacing:-1px;
+}
+.nav-links { display:flex; align-items:center; gap:0.5rem; }
+.nav-links a {
+  color:var(--muted); font-size:0.85rem; font-weight:500;
+  padding:0.4rem 0.8rem; border-radius:8px;
+  transition:all 0.2s;
+}
+.nav-links a:hover { color:var(--text); background:var(--glass2); }
+.nav-cta {
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  color:#fff; border:none;
+  padding:0.5rem 1.2rem; border-radius:10px;
+  font-family:'DM Sans',sans-serif;
+  font-size:0.85rem; font-weight:600;
+  cursor:pointer; transition:all 0.25s;
+  text-decoration:none; display:inline-block;
+}
+.nav-cta:hover { opacity:0.9; transform:translateY(-1px); box-shadow:0 6px 20px var(--glow1); }
+.theme-pill {
+  background:var(--glass2); border:1px solid var(--border);
+  color:var(--text); padding:0.4rem 0.8rem; border-radius:20px;
+  font-size:0.78rem; cursor:pointer; font-family:inherit;
+  transition:all 0.2s;
+}
+.theme-pill:hover { border-color:var(--c1); }
+
+/* ===================== HERO ===================== */
+.hero {
+  position:relative; z-index:2;
+  min-height:100vh;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center;
+  padding:8rem 2rem 4rem;
+}
+.hero-badge {
+  display:inline-flex; align-items:center; gap:0.5rem;
+  background:var(--glass2);
+  border:1px solid var(--border2);
+  padding:0.4rem 1rem; border-radius:30px;
+  font-size:0.78rem; font-weight:500; color:var(--muted);
+  margin-bottom:2rem;
+  backdrop-filter:blur(12px);
+}
+.hero-badge-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--c2);
+  animation:livePulse 1.5s ease infinite;
+}
+@keyframes livePulse {
+  0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 0 0 rgba(236,72,153,0.4);}
+  50%{opacity:0.8;transform:scale(1.2);box-shadow:0 0 0 4px rgba(236,72,153,0);}
+}
+.hero-title {
+  font-family:'Syne',sans-serif;
+  font-size:clamp(3rem,9vw,7.5rem);
+  font-weight:900;
+  line-height:0.95;
+  letter-spacing:-3px;
+  margin-bottom:1.5rem;
+}
+.hero-title .line1 { display:block; color:var(--text); }
+.hero-title .line2 {
+  display:block;
+  /* CRITICAL FIX: overflow:hidden + fixed height stops layout shift */
+  height:1.05em;
+  overflow:visible;
+  background:linear-gradient(135deg,var(--c1),var(--c2),var(--c3));
+  background-size:300% 300%;
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:gradMove 4s ease infinite;
+}
+/* Inner span is the actual typewriter target — no height set here */
+.hero-title .line2 > span {
+  display:inline-block;
+}
+@keyframes gradMove {
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+.hero-sub {
+  font-size:clamp(1rem,2vw,1.2rem);
+  color:var(--muted);
+  max-width:550px;
+  line-height:1.8;
+  margin-bottom:3rem;
+  font-weight:400;
+}
+.hero-btns { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:1rem; }
+.btn-glow {
+  display:inline-flex; align-items:center; gap:0.5rem;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  color:#fff; padding:0.9rem 2.2rem; border-radius:14px;
+  font-weight:700; font-size:0.95rem;
+  border:none; cursor:pointer;
+  transition:all 0.3s; position:relative; overflow:hidden;
+  box-shadow:0 0 40px var(--glow1);
+}
+.btn-glow::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);
+  opacity:0; transition:opacity 0.3s;
+}
+.btn-glow:hover { transform:translateY(-3px); box-shadow:0 0 60px var(--glow2); }
+.btn-glow:hover::before { opacity:1; }
+.btn-ghost {
+  display:inline-flex; align-items:center; gap:0.5rem;
+  background:var(--glass); border:1px solid var(--border2);
+  color:var(--text); padding:0.9rem 2.2rem; border-radius:14px;
+  font-weight:600; font-size:0.95rem; cursor:pointer;
+  transition:all 0.3s;
+  backdrop-filter:blur(12px);
+}
+.btn-ghost:hover { border-color:var(--c1); color:var(--c1); transform:translateY(-3px); }
+
+/* Floating chips */
+.hero-chips { display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:center; margin-top:2rem; }
+.chip {
+  background:var(--glass);
+  border:1px solid var(--border);
+  padding:0.35rem 0.9rem; border-radius:20px;
+  font-size:0.78rem; color:var(--muted);
+  backdrop-filter:blur(10px);
+  transition:all 0.2s;
+}
+.chip:hover { border-color:var(--c3); color:var(--c3); }
+
+/* Scroll hint */
+.scroll-cue {
+  position:absolute; bottom:2rem;
+  display:flex; flex-direction:column; align-items:center; gap:0.5rem;
+  color:var(--muted); font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase;
+  animation:scueBob 2.5s ease infinite;
+}
+.scroll-cue::after { content:''; width:1px; height:44px; background:linear-gradient(to bottom,var(--muted),transparent); }
+@keyframes scueBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+
+/* ===================== GLASS STATS ===================== */
+.stats-row {
+  position:relative; z-index:2;
+  display:flex; justify-content:center;
+  padding:3rem 4rem;
+  background:rgba(6,6,15,0.3);
+  backdrop-filter:blur(30px);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  gap:0;
+}
+[data-theme="light"] .stats-row { background:rgba(248,247,255,0.4); }
+.stat {
+  flex:1; max-width:200px;
+  text-align:center; padding:1.5rem 2rem;
+  border-right:1px solid var(--border);
+  transition:all 0.3s;
+}
+.stat:last-child { border-right:none; }
+.stat:hover { background:var(--glass); }
+.stat-num {
+  font-family:'Syne',sans-serif;
+  font-size:2.8rem; font-weight:900;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  line-height:1;
+}
+.stat-lbl { color:var(--muted); font-size:0.78rem; margin-top:0.4rem; letter-spacing:0.08em; text-transform:uppercase; }
+
+/* ===================== SECTIONS ===================== */
+.section {
+  position:relative; z-index:2;
+  padding:7rem 4rem;
+  max-width:1200px; margin:0 auto;
+}
+.sec-label {
+  font-size:0.72rem; text-transform:uppercase; letter-spacing:0.18em;
+  color:var(--c3); font-weight:600; margin-bottom:0.8rem;
+}
+.sec-title {
+  font-family:'Syne',sans-serif;
+  font-size:clamp(2rem,4.5vw,3.5rem);
+  font-weight:900; line-height:1.05;
+  letter-spacing:-1.5px; margin-bottom:4rem;
+}
+.sec-title span {
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+
+/* ===================== FEATURE CARDS ===================== */
+.features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; }
+.fcard {
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:1.8rem;
+  transition:all 0.35s;
+  position:relative; overflow:hidden;
+  backdrop-filter:blur(16px);
+}
+.fcard::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,var(--c1),var(--c2),var(--c3));
+  opacity:0; transition:opacity 0.35s;
+}
+.fcard:hover { transform:translateY(-8px); border-color:var(--border2); box-shadow:0 24px 60px rgba(0,0,0,0.4); }
+.fcard:hover::before { opacity:1; }
+.fcard-icon {
+  width:52px; height:52px;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem; margin-bottom:1.2rem;
+  box-shadow:0 8px 25px var(--glow1);
+}
+.fcard h3 { font-family:'Syne',sans-serif; font-weight:700; font-size:1.05rem; margin-bottom:0.5rem; }
+.fcard p { color:var(--muted); font-size:0.86rem; line-height:1.7; }
+
+/* Large feature card */
+.fcard.large { grid-column:span 2; display:flex; gap:2rem; align-items:center; }
+.fcard.large .fcard-content { flex:1; }
+.fcard.large .fcard-visual {
+  width:180px; height:140px; flex-shrink:0;
+  background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(236,72,153,0.2));
+  border-radius:16px; border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:3rem;
+}
+
+/* ===================== HOW IT WORKS ===================== */
+.how-section {
+  position:relative; z-index:2;
+  padding:7rem 4rem;
+  background:rgba(6,6,15,0.3);
+  backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+}
+[data-theme="light"] .how-section { background:rgba(248,247,255,0.4); }
+.how-steps { display:grid; grid-template-columns:repeat(4,1fr); gap:2rem; max-width:1200px; margin:0 auto; }
+.step {
+  text-align:center; padding:2rem 1.2rem;
+  background:var(--glass); border:1px solid var(--border);
+  border-radius:20px; position:relative;
+  transition:all 0.3s; backdrop-filter:blur(10px);
+}
+.step:hover { border-color:var(--border2); transform:translateY(-5px); }
+.step-num {
+  width:56px; height:56px; border-radius:50%;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:900; font-size:1.2rem;
+  color:#fff; margin:0 auto 1.2rem;
+  box-shadow:0 8px 25px var(--glow1);
+}
+.step h3 { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; margin-bottom:0.5rem; }
+.step p { color:var(--muted); font-size:0.82rem; line-height:1.7; }
+
+/* ===================== TESTIMONIALS ===================== */
+.testi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; }
+.tcard {
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:20px; padding:1.8rem;
+  transition:all 0.3s; position:relative;
+  backdrop-filter:blur(16px);
+}
+.tcard:hover { border-color:var(--border2); transform:translateY(-4px); }
+.tcard::before {
+  content:'"'; position:absolute; top:1rem; right:1.5rem;
+  font-size:5rem; font-family:'Syne',sans-serif;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  opacity:0.2; line-height:1;
+}
+.stars { color:#f59e0b; font-size:0.85rem; margin-bottom:0.8rem; }
+.tcard-text { font-size:0.88rem; color:var(--muted); line-height:1.8; margin-bottom:1.2rem; font-style:italic; }
+.tcard-author { display:flex; align-items:center; gap:0.75rem; }
+.tcard-ava { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+.tcard-name { font-family:'Syne',sans-serif; font-weight:700; font-size:0.9rem; }
+.tcard-branch { font-size:0.72rem; color:var(--muted); }
+
+/* ===================== FAQ ===================== */
+.faq-wrap { max-width:780px; margin:0 auto; }
+.faq-item {
+  border:1px solid var(--border);
+  border-radius:14px; margin-bottom:0.75rem;
+  overflow:hidden; background:var(--glass);
+  backdrop-filter:blur(10px); transition:border-color 0.2s;
+}
+.faq-item:hover { border-color:var(--border2); }
+.faq-q {
+  padding:1.2rem 1.5rem; display:flex; justify-content:space-between;
+  align-items:center; cursor:pointer; font-weight:600;
+  font-size:0.92rem; user-select:none;
+}
+.faq-q:hover { background:var(--glass2); }
+.faq-icon { color:var(--c1); font-size:1.3rem; transition:transform 0.3s; flex-shrink:0; }
+.faq-item.open .faq-icon { transform:rotate(45deg); }
+.faq-a {
+  max-height:0; overflow:hidden;
+  transition:max-height 0.35s ease, padding 0.3s;
+  color:var(--muted); font-size:0.87rem; line-height:1.8;
+}
+.faq-item.open .faq-a { max-height:200px; padding:0 1.5rem 1.2rem; }
+
+/* ===================== CTA SECTION ===================== */
+.cta-wrap {
+  position:relative; z-index:2;
+  text-align:center; padding:7rem 2rem;
+  border-top:1px solid var(--border); overflow:hidden;
+}
+.cta-glow-left {
+  position:absolute; top:50%; left:20%;
+  transform:translate(-50%,-50%);
+  width:500px; height:300px;
+  background:radial-gradient(ellipse,var(--glow1),transparent 70%);
+  pointer-events:none;
+}
+.cta-glow-right {
+  position:absolute; top:50%; right:20%;
+  transform:translate(50%,-50%);
+  width:500px; height:300px;
+  background:radial-gradient(ellipse,var(--glow2),transparent 70%);
+  pointer-events:none;
+}
+.cta-title {
+  font-family:'Syne',sans-serif;
+  font-size:clamp(2.5rem,6vw,5rem);
+  font-weight:900; letter-spacing:-2px;
+  margin-bottom:1rem; position:relative;
+}
+.cta-title span {
+  background:linear-gradient(135deg,var(--c1),var(--c2),var(--c3));
+  background-size:300% 300%;
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  animation:gradMove 4s ease infinite;
+}
+.cta-sub { color:var(--muted); font-size:1.05rem; margin-bottom:2.5rem; position:relative; }
+
+/* ===================== FOOTER ===================== */
+footer {
+  position:relative; z-index:2;
+  padding:4rem; border-top:1px solid var(--border);
+}
+.footer-grid {
+  max-width:1200px; margin:0 auto;
+  display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr;
+  gap:3rem; margin-bottom:3rem;
+}
+.footer-brand .logo { font-size:1.4rem; margin-bottom:1rem; display:block; }
+.footer-desc { color:var(--muted); font-size:0.84rem; line-height:1.7; }
+.footer-col h4 { font-family:'Syne',sans-serif; font-weight:700; font-size:0.85rem; margin-bottom:1rem; }
+.footer-col ul { list-style:none; display:flex; flex-direction:column; gap:0.5rem; }
+.footer-col ul li a { color:var(--muted); font-size:0.83rem; transition:color 0.2s; }
+.footer-col ul li a:hover { color:var(--c2); }
+.footer-bottom {
+  text-align:center; color:var(--muted); font-size:0.78rem;
+  padding-top:2rem; border-top:1px solid var(--border);
+  max-width:1200px; margin:0 auto;
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media(max-width:900px){
+  nav { padding:0.9rem 1.5rem; }
+  .section, .how-section { padding:4rem 1.5rem; }
+  .features-grid { grid-template-columns:1fr 1fr; }
+  .fcard.large { grid-column:span 1; flex-direction:column; }
+  .fcard.large .fcard-visual { width:100%; height:100px; }
+  .how-steps { grid-template-columns:repeat(2,1fr); }
+  .testi-grid { grid-template-columns:1fr; }
+  .stats-row { flex-wrap:wrap; padding:2rem 1rem; }
+  .stat { flex:1 1 40%; min-width:120px; border-right:none; border-bottom:1px solid var(--border); }
+  .stat:nth-child(odd) { border-right:1px solid var(--border); }
+  footer { padding:2rem 1.5rem; }
+  .footer-grid { grid-template-columns:1fr 1fr; }
+  .blob1{width:350px;height:350px;}
+  .blob2{width:300px;height:300px;}
+  .blob3{width:250px;height:250px;}
+  .blob4{width:200px;height:200px;}
+}
+@media(max-width:600px){
+  /* NAV */
+  nav{padding:0.75rem 1rem;}
+  .nav-links{gap:0.25rem;}
+  .nav-links a{font-size:0.75rem;padding:0.25rem 0.4rem;}
+  .nav-cta{padding:0.4rem 0.9rem;font-size:0.8rem;}
+  /* HERO */
+  .hero{padding:6rem 1.2rem 3rem;}
+  .hero-title{letter-spacing:-1.5px;font-size:clamp(2.5rem,10vw,4rem);}
+  .hero-sub{font-size:0.95rem;}
+  .hero-chips{display:none;}
+  .hero-btns{flex-direction:column;align-items:stretch;}
+  .btn-glow,.btn-ghost{justify-content:center;padding:0.85rem 1.5rem;}
+  /* BLOBS — smaller on phone */
+  .blob1{width:250px;height:250px;top:-80px;left:-60px;}
+  .blob2{width:220px;height:220px;}
+  .blob3{width:180px;height:180px;}
+  .blob4{width:160px;height:160px;}
+  /* STATS */
+  .stats-row{flex-wrap:wrap;padding:1.5rem 1rem;gap:0;}
+  .stat{flex:1 1 45%;border-right:none;border-bottom:1px solid var(--border);padding:1rem;}
+  .stat-num{font-size:2rem;}
+  /* SECTIONS */
+  .section{padding:3.5rem 1.2rem;}
+  .sec-title{font-size:1.8rem;letter-spacing:-0.5px;margin-bottom:2rem;}
+  .features-grid{grid-template-columns:1fr;}
+  .fcard.large{flex-direction:column;}
+  .fcard.large .fcard-visual{width:100%;height:80px;}
+  /* HOW IT WORKS */
+  .how-section{padding:3.5rem 1.2rem;}
+  .how-steps{grid-template-columns:1fr;}
+  /* TESTIMONIALS */
+  .testi-grid{grid-template-columns:1fr;}
+  /* CTA */
+  .cta-wrap{padding:4rem 1.2rem;}
+  .cta-title{font-size:clamp(1.8rem,8vw,3rem);letter-spacing:-1px;}
+  /* FOOTER */
+  footer{padding:2.5rem 1.2rem;}
+  .footer-grid{grid-template-columns:1fr;}
+  /* HERO SCROLL CUE */
+  .scroll-cue{display:none;}
+}
+@media(max-width:380px){
+  .hero-title{font-size:2.8rem;}
+  .nav-cta{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="blobs">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+  <div class="blob blob4"></div>
+</div>
+<div class="cur" id="cur"></div>
+<div class="cur2" id="cur2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">NeuralPrep</a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How It Works</a>
+    <a href="timetable.html">📅 Timetable</a>
+    <a href="dashboard.html">📈 Dashboard</a>
+    <a href="features.html">⚡ More</a>
+    <a href="login.html">Login</a>
+    <button class="theme-pill" onclick="toggleTheme()">🌓</button>
+    <a href="planner.html" class="nav-cta">Get Started →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="hero-badge-dot"></span>
+    AI-Powered Exam Intelligence — Now Live
+  </div>
+  <h1 class="hero-title">
+    <span class="line1">Study Smarter.</span>
+    <span class="line2"><span id="heroLine2">Score Higher.</span></span>
+  </h1>
+  <p class="hero-sub">
+    The only exam prep tool that uses Machine Learning to predict your scores and automatically builds a personalized study roadmap — tailored to your weaknesses.
+  </p>
+  <div class="hero-btns">
+    <a href="planner.html" class="btn-glow">⚡ Generate My Study Plan</a>
+    <a href="login.html" class="btn-ghost">👤 Sign In</a>
+  </div>
+  <div class="hero-chips">
+    <span class="chip">🧠 ML Predictions</span>
+    <span class="chip">🌍 5 Languages</span>
+    <span class="chip">📅 Smart Timetable</span>
+    <span class="chip">🏆 Leaderboard</span>
+    <span class="chip">🤖 AI Chatbot</span>
+    <span class="chip">📲 Install as App</span>
+    <span class="chip">100% Free</span>
+  </div>
+  <div class="scroll-cue">Scroll</div>
+</section>
+
+<!-- STATS -->
+<div class="stats-row">
+  <div class="stat"><div class="stat-num" data-target="6">0</div><div class="stat-lbl">Branches</div></div>
+  <div class="stat"><div class="stat-num" data-target="5">0</div><div class="stat-lbl">Languages</div></div>
+  <div class="stat"><div class="stat-num" data-target="9">0</div><div class="stat-lbl">Extra Features</div></div>
+  <div class="stat"><div class="stat-num" data-target="100">0</div><div class="stat-lbl">% Free</div></div>
+</div>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <p class="sec-label">What makes us different</p>
+  <h2 class="sec-title">Built for every student,<br/><span>every branch.</span></h2>
+  <div class="features-grid">
+    <div class="fcard large">
+      <div class="fcard-content">
+        <div class="fcard-icon">🧠</div>
+        <h3>ML-Powered Score Prediction</h3>
+        <p>Linear Regression model trained on real academic data. Enter your marks → get predicted scores in under 100ms. Covers Mid Exam (30 marks) and Semester (100 marks) modes.</p>
+      </div>
+      <div class="fcard-visual">⚡</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-icon">📅</div>
+      <h3>Smart Timetable Maker</h3>
+      <p>Auto-generates weekly, daily or exam-deadline timetables based on your predicted performance. Weak subjects get more time automatically.</p>
+    </div>
+    <div class="fcard">
+      <div class="fcard-icon">✨</div>
+      <h3>AI Topic Suggestions</h3>
+      <p>Google Gemini AI suggests the 5 most important exam topics for any subject you add. Edit, add or remove freely.</p>
+    </div>
+    <div class="fcard">
+      <div class="fcard-icon">🤖</div>
+      <h3>AI Study Chatbot</h3>
+      <p>Ask doubts about Laplace, SQL, Newton's Laws — Gemini explains in detail. Full conversation history and offline fallback.</p>
+    </div>
+    <div class="fcard">
+      <div class="fcard-icon">🌍</div>
+      <h3>Multi-Language UI</h3>
+      <p>Switch the entire interface to Telugu, Hindi, Tamil, Kannada or Malayalam. Your language, your comfort.</p>
+    </div>
+    <div class="fcard large">
+      <div class="fcard-visual">🏆</div>
+      <div class="fcard-content">
+        <div class="fcard-icon">🏆</div>
+        <h3>Real-Time Group Leaderboard</h3>
+        <p>Create a study group, share your 6-digit code with friends. When they join, everyone's predicted scores appear on a live leaderboard that auto-refreshes every 15 seconds.</p>
+      </div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-icon">⏱️</div>
+      <h3>Pomodoro Focus Timer</h3>
+      <p>Built-in 25/5/15 minute Pomodoro timer with session logs, subject tracking and circular progress ring.</p>
+    </div>
+    <div class="fcard">
+      <div class="fcard-icon">❤️</div>
+      <h3>Mental Health Tracker</h3>
+      <p>Daily stress check-in with 7-day wellbeing history and personalized tips based on your stress level.</p>
+    </div>
+    <div class="fcard">
+      <div class="fcard-icon">📲</div>
+      <h3>Install as Mobile App</h3>
+      <p>Full PWA support. Install on your phone's home screen — works offline, loads instantly, no app store needed.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div style="max-width:1200px;margin:0 auto">
+    <p class="sec-label">Simple process</p>
+    <h2 class="sec-title">How NeuralPrep works</h2>
+    <div class="how-steps">
+      <div class="step"><div class="step-num">01</div><h3>Choose Your Branch</h3><p>Select from 6 branches. Subjects auto-load as presets you can freely customize.</p></div>
+      <div class="step"><div class="step-num">02</div><h3>Enter Your Marks</h3><p>Use sliders to input written, assignment and attendance scores for each subject.</p></div>
+      <div class="step"><div class="step-num">03</div><h3>AI Predicts & Plans</h3><p>ML predicts scores instantly. AI suggests topics. Smart time allocation builds your roadmap.</p></div>
+      <div class="step"><div class="step-num">04</div><h3>Study & Achieve</h3><p>Follow roadmap, generate timetable, earn badges, compare with friends, download PDF.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section">
+  <p class="sec-label">What students say</p>
+  <h2 class="sec-title">Loved by students<br/><span>across India.</span></h2>
+  <div class="testi-grid">
+    <div class="tcard"><div class="stars">★★★★★</div><p class="tcard-text">NeuralPrep predicted my Maths score perfectly! The AI topic suggestions saved me hours of research. Scored way better than expected.</p><div class="tcard-author"><div class="tcard-ava" style="background:rgba(124,58,237,0.15)">🎓</div><div><div class="tcard-name">Ravi Kumar</div><div class="tcard-branch">CSE — 3rd Year</div></div></div></div>
+    <div class="tcard"><div class="stars">★★★★★</div><p class="tcard-text">The Telugu language support is amazing! The exam countdown and study timetable kept me on track every single day.</p><div class="tcard-author"><div class="tcard-ava" style="background:rgba(236,72,153,0.15)">📡</div><div><div class="tcard-name">Priya Lakshmi</div><div class="tcard-branch">ECE — 2nd Year</div></div></div></div>
+    <div class="tcard"><div class="stars">★★★★★</div><p class="tcard-text">The leaderboard feature is incredible! Me and my friends compete on scores daily. Makes exam prep actually fun!</p><div class="tcard-author"><div class="tcard-ava" style="background:rgba(6,182,212,0.15)">⚙️</div><div><div class="tcard-name">Arjun Reddy</div><div class="tcard-branch">Mechanical — 4th Year</div></div></div></div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" style="padding-top:0">
+  <p class="sec-label">Got questions?</p>
+  <h2 class="sec-title">Frequently Asked<br/><span>Questions</span></h2>
+  <div class="faq-wrap">
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Is NeuralPrep completely free?<span class="faq-icon">+</span></div><div class="faq-a">Yes! 100% free. No signup required for guest access. All features — AI topics, PDF export, timetable, chatbot, leaderboard — are completely free forever.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">How accurate are the score predictions?<span class="faq-icon">+</span></div><div class="faq-a">Our Linear Regression model is trained on real academic datasets. It provides reliable estimates based on your mid/assignment/attendance scores. Predictions improve with accurate input data.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Which branches are supported?<span class="faq-icon">+</span></div><div class="faq-a">CSE/IT, ECE/EEE, Mechanical, Civil, MBA/MCA, and Custom. The Custom option lets any student from any branch add their own subjects with AI topic suggestions.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">How does the Smart Timetable work?<span class="faq-icon">+</span></div><div class="faq-a">The timetable auto-generates based on your predicted scores — weak subjects get more study sessions, strong ones get fewer. You can switch between Daily, Weekly or Exam-Deadline views and export as PDF.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Can I use it on my phone?<span class="faq-icon">+</span></div><div class="faq-a">Yes! NeuralPrep is fully mobile-responsive and installable as a PWA. On Android: Chrome menu → Add to Home Screen. On iPhone: Safari Share → Add to Home Screen. Works offline too!</div></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-wrap">
+  <div class="cta-glow-left"></div>
+  <div class="cta-glow-right"></div>
+  <h2 class="cta-title">Ready to <span>ace</span><br/>your exams?</h2>
+  <p class="cta-sub">Start your personalized study plan in under 2 minutes. No signup needed.</p>
+  <a href="planner.html" class="btn-glow" style="font-size:1.05rem;padding:1rem 2.8rem">⚡ Start For Free</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index.html" class="logo">NeuralPrep</a>
+      <p class="footer-desc">An AI-powered smart exam preparation scheduler built with Machine Learning, Node.js and Google Gemini AI. Free for all students.</p>
+    </div>
+    <div class="footer-col"><h4>Pages</h4><ul><li><a href="planner.html">Planner</a></li><li><a href="results.html">Results</a></li><li><a href="dashboard.html">Dashboard</a></li><li><a href="timetable.html">Timetable</a></li><li><a href="features.html">Extra Features</a></li><li><a href="login.html">Login</a></li></ul></div>
+    <div class="footer-col"><h4>Features</h4><ul><li><a href="planner.html">ML Predictions</a></li><li><a href="planner.html">AI Topics</a></li><li><a href="timetable.html">Smart Timetable</a></li><li><a href="features.html">AI Chatbot</a></li><li><a href="features.html">Leaderboard</a></li><li><a href="features.html">PWA Install</a></li></ul></div>
+    <div class="footer-col"><h4>Tech Stack</h4><ul><li><a href="#">Node.js + Express</a></li><li><a href="#">Python + scikit-learn</a></li><li><a href="#">Google Gemini AI</a></li><li><a href="#">Chart.js</a></li><li><a href="#">jsPDF + html2canvas</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">Built with ❤️ using <strong style="color:var(--c1)">Node.js</strong>, <strong style="color:var(--c2)">Machine Learning</strong> &amp; <strong style="color:var(--c3)">Gemini AI</strong> &nbsp;|&nbsp; NeuralPrep © 2026 &nbsp;|&nbsp; 100% Free</div>
+</footer>
+
+<script>
+'use strict';
+// Theme
+function toggleTheme(){const h=document.documentElement;h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';localStorage.setItem('theme',h.dataset.theme);}
+(()=>{const t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t;})();
+
+// Cursor
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let mx=0,my=0,cx=0,cy=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+function animCursor(){cx+=(mx-cx)*0.12;cy+=(my-cy)*0.12;cur2.style.left=cx+'px';cur2.style.top=cy+'px';requestAnimationFrame(animCursor);}
+animCursor();
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.transform='translate(-50%,-50%) scale(2.5)';cur2.style.width='60px';cur2.style.height='60px';});
+  el.addEventListener('mouseleave',()=>{cur.style.transform='translate(-50%,-50%) scale(1)';cur2.style.width='44px';cur2.style.height='44px';});
+});
+
+// Typewriter
+const words=['Score Higher.','Beat The Exam.','Ace Every Test.','Own Your Results.','Lead The Board.'];
+let wi=0,ci=0,del=false;
+const el=document.getElementById('heroLine2');
+function tw(){
+  const w=words[wi];
+  if(!del){el.textContent=w.substring(0,ci+1);ci++;if(ci===w.length){del=true;setTimeout(tw,2200);return;}}
+  else{el.textContent=w.substring(0,ci-1);ci--;if(ci===0){del=false;wi=(wi+1)%words.length;}}
+  setTimeout(tw,del?50:90);
+}
+tw();
+
+// Stat counters
+const io=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){document.querySelectorAll('[data-target]').forEach(el=>{const t=+el.dataset.target;let c=0;const step=t/50;const ti=setInterval(()=>{c=Math.min(c+step,t);el.textContent=Math.round(c)+(t===100?'%':'+');if(c>=t)clearInterval(ti);},20);});io.disconnect();}});},{threshold:0.3});
+io.observe(document.querySelector('.stats-row'));
+
+// FAQ
+function toggleFaq(el){const item=el.parentElement;const open=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));if(!open)item.classList.add('open');}
+
+// Service Worker
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+</script>
+</body>
+</html>

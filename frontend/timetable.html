@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NeuralPrep — Smart Timetable Maker</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="manifest" href="manifest.json"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#06060f;--bg2:#0d0d1f;
+  --glass:rgba(255,255,255,0.04);--glass2:rgba(255,255,255,0.08);
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);
+  --text:#f0f0ff;--muted:rgba(255,255,255,0.45);
+  --c1:#7c3aed;--c2:#ec4899;--c3:#06b6d4;--c4:#f59e0b;--c5:#10b981;
+  --glow1:rgba(124,58,237,0.35);--glow2:rgba(236,72,153,0.35);
+  --critical:#ff4757;--average:#ffa502;--excellent:#2ed573;
+}
+[data-theme="light"]{
+  --bg:#f8f7ff;--bg2:#ede8ff;
+  --glass:rgba(255,255,255,0.6);--glass2:rgba(255,255,255,0.85);
+  --border:rgba(100,80,200,0.12);--border2:rgba(100,80,200,0.25);
+  --text:#0f0a2e;--muted:rgba(15,10,46,0.5);
+  --glow1:rgba(124,58,237,0.15);--glow2:rgba(236,72,153,0.15);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+/* BLOBS */
+.blobs{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:0.25;animation:bf 18s ease-in-out infinite;}
+[data-theme="light"] .blob{opacity:0.12;}
+.b1{width:500px;height:500px;background:var(--c1);top:-150px;left:-100px;animation-delay:0s;}
+.b2{width:400px;height:400px;background:var(--c2);bottom:-100px;right:-100px;animation-delay:-9s;}
+.b3{width:350px;height:350px;background:var(--c3);top:50%;left:60%;animation-delay:-4s;}
+@keyframes bf{0%,100%{transform:translate(0,0)scale(1);}33%{transform:translate(50px,-30px)scale(1.05);}66%{transform:translate(-30px,50px)scale(0.95);}}
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:rgba(6,6,15,0.75);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:0.5rem;}
+[data-theme="light"] nav{background:rgba(248,247,255,0.8);}
+.logo{font-family:'Outfit',sans-serif;font-weight:900;font-size:1.4rem;background:linear-gradient(135deg,var(--c1),var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none;}
+.nav-r{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;}
+.nav-r a{color:var(--muted);text-decoration:none;font-size:0.82rem;padding:0.3rem 0.6rem;border-radius:7px;transition:all 0.2s;}
+.nav-r a:hover{color:var(--text);background:var(--glass2);}
+.npill{background:var(--glass2);border:1px solid var(--border);color:var(--text);padding:0.38rem 0.8rem;border-radius:20px;cursor:pointer;font-size:0.76rem;font-family:inherit;transition:all 0.2s;}
+.npill:hover{border-color:var(--c1);}
+/* PAGE */
+.page{max-width:1200px;margin:0 auto;padding:2.5rem 2rem 5rem;position:relative;z-index:2;}
+/* HEADER */
+.page-hero{
+  background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(236,72,153,0.08),rgba(6,182,212,0.06));
+  border:1px solid var(--border2);border-radius:24px;
+  padding:2.5rem;margin-bottom:2rem;position:relative;overflow:hidden;
+  backdrop-filter:blur(20px);
+}
+.page-hero::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(124,58,237,0.05),transparent);pointer-events:none;}
+.page-hero h1{font-family:'Outfit',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;letter-spacing:-1px;margin-bottom:0.5rem;}
+.page-hero h1 span{background:linear-gradient(135deg,var(--c1),var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.page-hero p{color:var(--muted);font-size:0.9rem;max-width:600px;line-height:1.6;}
+.hero-tags{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem;}
+.htag{background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);color:var(--c1);padding:0.25rem 0.7rem;border-radius:20px;font-size:0.73rem;font-weight:500;}
+.htag.pink{background:rgba(236,72,153,0.1);border-color:rgba(236,72,153,0.2);color:var(--c2);}
+.htag.cyan{background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.2);color:var(--c3);}
+
+/* CONFIG PANEL */
+.config-grid{display:grid;grid-template-columns:320px 1fr;gap:1.5rem;margin-bottom:1.5rem;}
+.config-panel{background:var(--glass);border:1px solid var(--border);border-radius:20px;padding:1.5rem;backdrop-filter:blur(16px);}
+.cp-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.5rem;}
+.cp-title .dot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,var(--c1),var(--c2));}
+
+/* Form fields */
+.field{margin-bottom:1rem;}
+.field label{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.4rem;font-weight:600;}
+.field select,.field input[type="date"],.field input[type="time"],.field input[type="number"]{
+  width:100%;padding:0.65rem 0.9rem;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);
+  font-family:'Space Grotesk',sans-serif;font-size:0.85rem;
+  outline:none;transition:border-color 0.2s;appearance:none;
+  cursor:pointer;
+}
+.field select:focus,.field input:focus{border-color:var(--c1);}
+.field select option{background:var(--bg2);}
+
+/* Mode selector */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;}
+.mode-btn{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:10px;padding:0.8rem 0.5rem;text-align:center;
+  cursor:pointer;transition:all 0.2s;
+}
+.mode-btn:hover{border-color:var(--border2);}
+.mode-btn.active{background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(236,72,153,0.15));border-color:var(--c1);box-shadow:0 0 20px var(--glow1);}
+.mode-btn-icon{font-size:1.4rem;margin-bottom:0.3rem;}
+.mode-btn-lbl{font-size:0.75rem;font-weight:600;color:var(--muted);}
+.mode-btn.active .mode-btn-lbl{color:var(--c1);}
+
+/* Generate button */
+.gen-btn{
+  width:100%;padding:0.9rem;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  border:none;border-radius:12px;color:#fff;
+  font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:700;
+  cursor:pointer;transition:all 0.3s;
+  box-shadow:0 4px 25px var(--glow1);margin-top:0.5rem;
+}
+.gen-btn:hover{transform:translateY(-2px);box-shadow:0 8px 35px var(--glow2);}
+
+/* No plan notice */
+.no-plan{
+  background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);
+  border-radius:12px;padding:1rem 1.2rem;
+  font-size:0.84rem;color:var(--c4);
+  margin-bottom:1rem;display:flex;align-items:center;gap:0.6rem;
+}
+
+/* Subject weight preview */
+.weight-list{display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem;}
+.w-row{display:flex;align-items:center;gap:0.6rem;}
+.w-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.w-name{font-size:0.8rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.w-bar-wrap{width:80px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.w-bar{height:100%;border-radius:3px;transition:width 0.8s ease;}
+.w-hrs{font-size:0.75rem;font-weight:700;min-width:32px;text-align:right;}
+
+/* ===== TIMETABLE OUTPUT ===== */
+.tt-panel{background:var(--glass);border:1px solid var(--border);border-radius:20px;padding:1.5rem;backdrop-filter:blur(16px);}
+.tt-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:0.75rem;}
+.tt-title{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.1rem;}
+.tt-actions{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.tt-btn{padding:0.5rem 1rem;border-radius:10px;font-family:'Space Grotesk',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;}
+.tt-btn.pdf{background:linear-gradient(135deg,var(--c3),#0284c7);color:#fff;}
+.tt-btn.pdf:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(6,182,212,0.3);}
+.tt-btn.img{background:linear-gradient(135deg,var(--c5),#059669);color:#fff;}
+.tt-btn.img:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(16,185,129,0.3);}
+.tt-btn.reset{background:var(--glass2);border:1px solid var(--border);color:var(--muted);}
+.tt-btn.reset:hover{border-color:var(--c2);color:var(--c2);}
+
+/* View switcher */
+.view-tabs{display:flex;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:1.2rem;width:fit-content;}
+.vt{padding:0.45rem 1rem;border:none;background:transparent;color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;border-radius:8px;transition:all 0.2s;white-space:nowrap;}
+.vt.active{background:linear-gradient(135deg,var(--c1),var(--c2));color:#fff;}
+
+/* DAILY VIEW */
+.daily-grid{display:flex;flex-direction:column;gap:0.6rem;}
+.day-row{
+  display:flex;align-items:stretch;gap:0.6rem;
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  transition:all 0.25s;
+}
+.day-row:hover{border-color:var(--border2);transform:translateX(3px);}
+.day-label{
+  width:90px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(236,72,153,0.1));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0.8rem 0.5rem;border-right:1px solid var(--border);
+}
+.day-name{font-family:'Outfit',sans-serif;font-weight:800;font-size:0.85rem;}
+.day-date{font-size:0.65rem;color:var(--muted);margin-top:0.2rem;}
+.day-sessions{flex:1;display:flex;flex-wrap:wrap;gap:0.4rem;padding:0.7rem;}
+.session{
+  display:flex;flex-direction:column;
+  background:var(--glass2);border:1px solid var(--border);
+  border-radius:10px;padding:0.5rem 0.75rem;
+  min-width:120px;flex:1;
+  transition:all 0.2s;
+  position:relative;overflow:hidden;
+}
+.session::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;}
+.session.critical::before{background:var(--critical);}
+.session.average::before{background:var(--average);}
+.session.excellent::before{background:var(--excellent);}
+.session:hover{transform:translateY(-2px);border-color:var(--border2);}
+.session-subj{font-family:'Outfit',sans-serif;font-weight:700;font-size:0.8rem;margin-bottom:0.2rem;}
+.session-time{font-size:0.7rem;color:var(--muted);}
+.session-hrs{font-size:0.68rem;font-weight:600;margin-top:0.2rem;}
+.session.critical .session-hrs{color:var(--critical);}
+.session.average .session-hrs{color:var(--average);}
+.session.excellent .session-hrs{color:var(--excellent);}
+.rest-session{background:rgba(255,255,255,0.03);border:1px dashed var(--border);border-radius:10px;padding:0.5rem 0.75rem;font-size:0.75rem;color:var(--muted);display:flex;align-items:center;gap:0.4rem;flex:1;min-width:100px;}
+
+/* WEEKLY VIEW */
+.weekly-wrap{overflow-x:auto;}
+.weekly-grid{display:grid;grid-template-columns:70px repeat(7,1fr);gap:4px;min-width:650px;}
+.wg-header{background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(236,72,153,0.1));border:1px solid var(--border);border-radius:10px;padding:0.5rem;text-align:center;font-family:'Outfit',sans-serif;font-weight:700;font-size:0.78rem;}
+.wg-time{background:var(--glass);border:1px solid var(--border);border-radius:8px;padding:0.4rem;text-align:center;font-size:0.7rem;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+.wg-cell{background:var(--glass);border:1px solid var(--border);border-radius:8px;padding:0.4rem;min-height:52px;display:flex;flex-direction:column;gap:2px;transition:all 0.2s;}
+.wg-cell:hover{border-color:var(--border2);}
+.wc-item{border-radius:5px;padding:0.2rem 0.35rem;font-size:0.65rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wc-item.critical{background:rgba(255,71,87,0.2);color:var(--critical);}
+.wc-item.average{background:rgba(255,165,2,0.2);color:var(--average);}
+.wc-item.excellent{background:rgba(46,213,115,0.2);color:var(--excellent);}
+.wc-item.rest{background:rgba(255,255,255,0.04);color:var(--muted);}
+
+/* DEADLINE VIEW */
+.deadline-grid{display:flex;flex-direction:column;gap:0.75rem;}
+.dl-item{
+  display:flex;align-items:center;gap:1rem;
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:14px;padding:1.1rem 1.3rem;
+  transition:all 0.25s;position:relative;overflow:hidden;
+}
+.dl-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+.dl-item.critical::before{background:var(--critical);}
+.dl-item.average::before{background:var(--average);}
+.dl-item.excellent::before{background:var(--excellent);}
+.dl-item:hover{transform:translateX(4px);border-color:var(--border2);}
+.dl-rank{font-family:'Outfit',sans-serif;font-weight:900;font-size:1.5rem;width:36px;text-align:center;flex-shrink:0;}
+.dl-info{flex:1;}
+.dl-subj{font-family:'Outfit',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:0.25rem;}
+.dl-meta{font-size:0.78rem;color:var(--muted);}
+.dl-right{text-align:right;}
+.dl-hrs{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.2rem;}
+.dl-item.critical .dl-hrs{color:var(--critical);}
+.dl-item.average .dl-hrs{color:var(--average);}
+.dl-item.excellent .dl-hrs{color:var(--excellent);}
+.dl-pct{font-size:0.75rem;color:var(--muted);}
+.progress-wrap{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:0.4rem;}
+.progress-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+
+/* HOUR VIEW */
+.hour-timeline{display:flex;flex-direction:column;gap:0.4rem;}
+.ht-row{display:flex;align-items:center;gap:0.75rem;}
+.ht-time{width:60px;font-size:0.73rem;color:var(--muted);flex-shrink:0;text-align:right;}
+.ht-bar-wrap{flex:1;height:36px;background:var(--glass);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;}
+.ht-segment{height:100%;display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:600;transition:all 0.3s;cursor:default;overflow:hidden;white-space:nowrap;padding:0 4px;}
+.ht-segment.critical{background:rgba(255,71,87,0.3);color:var(--critical);}
+.ht-segment.average{background:rgba(255,165,2,0.3);color:var(--average);}
+.ht-segment.excellent{background:rgba(46,213,115,0.3);color:var(--excellent);}
+.ht-segment.break{background:rgba(255,255,255,0.04);color:var(--muted);}
+.ht-segment:hover{filter:brightness(1.3);}
+
+/* Legend */
+.legend{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1rem;padding:0.75rem 1rem;background:var(--glass);border:1px solid var(--border);border-radius:10px;}
+.leg-item{display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--muted);}
+.leg-dot{width:8px;height:8px;border-radius:50%;}
+
+/* Stats row */
+.tt-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.2rem;}
+.tt-stat{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:0.9rem;text-align:center;}
+.tt-stat-num{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.4rem;line-height:1;}
+.tt-stat-lbl{font-size:0.7rem;color:var(--muted);margin-top:0.2rem;}
+
+/* Empty state */
+.empty-state{text-align:center;padding:3rem;color:var(--muted);}
+.empty-icon{font-size:3rem;margin-bottom:1rem;}
+.empty-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:0.5rem;color:var(--text);}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(10,10,30,0.95);color:var(--text);padding:0.7rem 1.5rem;border-radius:12px;font-size:0.84rem;z-index:9999;backdrop-filter:blur(12px);border:1px solid var(--border);transition:transform 0.3s,opacity 0.3s;opacity:0;text-align:center;max-width:90vw;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+@media(max-width:768px){
+  nav{padding:0.75rem 1rem;}
+  .page{padding:1.5rem 1rem 4rem;}
+  .config-grid{grid-template-columns:1fr;}
+  .tt-stats{grid-template-columns:repeat(2,1fr);}
+  .weekly-grid{min-width:500px;}
+  .mode-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="blobs"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="toast" id="toast"></div>
+
+<nav>
+  <a href="index.html" class="logo">NeuralPrep</a>
+  <div class="nav-r">
+    <a href="planner.html">Planner</a>
+    <a href="results.html">Results</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="features.html">Features</a>
+    <button class="npill" onclick="toggleTheme()">🌓 Theme</button>
+  </div>
+</nav>
+
+<div class="page">
+  <!-- PAGE HERO -->
+  <div class="page-hero">
+    <h1>📅 <span>Smart Timetable</span> Maker</h1>
+    <p>Auto-generates your study timetable based on ML predicted scores. Weak subjects automatically get more sessions. Choose Daily, Weekly, Exam Deadline or Hourly view.</p>
+    <div class="hero-tags">
+      <span class="htag">⚡ ML-Based Allocation</span>
+      <span class="htag pink">📅 4 View Modes</span>
+      <span class="htag cyan">📄 PDF Export</span>
+    </div>
+  </div>
+
+  <div class="config-grid">
+    <!-- CONFIG PANEL -->
+    <div class="config-panel">
+      <div class="cp-title"><span class="dot"></span> Timetable Configuration</div>
+
+      <div id="noPlanMsg" class="no-plan" style="display:none">
+        ⚠️ No study plan found. <a href="planner.html" style="color:var(--c4);text-decoration:underline">Generate a plan first</a> for ML-based timetable.
+      </div>
+
+      <!-- Timetable mode -->
+      <div class="field"><label>📐 Timetable Type</label></div>
+      <div class="mode-grid">
+        <div class="mode-btn active" data-mode="daily" onclick="setMode(this)"><div class="mode-btn-icon">📆</div><div class="mode-btn-lbl">Daily</div></div>
+        <div class="mode-btn" data-mode="weekly" onclick="setMode(this)"><div class="mode-btn-icon">🗓️</div><div class="mode-btn-lbl">Weekly</div></div>
+        <div class="mode-btn" data-mode="deadline" onclick="setMode(this)"><div class="mode-btn-icon">🎯</div><div class="mode-btn-lbl">Deadline</div></div>
+        <div class="mode-btn" data-mode="hourly" onclick="setMode(this)"><div class="mode-btn-icon">⏰</div><div class="mode-btn-lbl">Hourly</div></div>
+      </div>
+
+      <div class="field">
+        <label>📅 Start Date</label>
+        <input type="date" id="startDate"/>
+      </div>
+      <div id="deadlineField" class="field" style="display:none">
+        <label>🎯 Exam Deadline Date</label>
+        <input type="date" id="deadlineDate"/>
+      </div>
+      <div class="field">
+        <label>⏰ Study Start Time</label>
+        <input type="time" id="startTime" value="09:00"/>
+      </div>
+      <div class="field">
+        <label>⏰ Study End Time</label>
+        <input type="time" id="endTime" value="22:00"/>
+      </div>
+      <div class="field">
+        <label>☕ Break Duration (mins)</label>
+        <input type="number" id="breakMins" value="15" min="5" max="60" step="5"
+          style="width:100%;padding:0.65rem 0.9rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;"/>
+      </div>
+
+      <div class="cp-title" style="margin-top:0.5rem"><span class="dot"></span> Subject Weights Preview</div>
+      <div class="weight-list" id="weightList">
+        <div style="color:var(--muted);font-size:0.8rem">Generate a plan to see weights</div>
+      </div>
+
+      <button class="gen-btn" onclick="generateTimetable()">📅 Generate Timetable</button>
+    </div>
+
+    <!-- TIMETABLE OUTPUT PANEL -->
+    <div class="tt-panel" id="ttPanel">
+      <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <div class="empty-title">Your timetable will appear here</div>
+        <p style="color:var(--muted);font-size:0.84rem">Configure settings and click Generate Timetable</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// Theme
+function toggleTheme(){const h=document.documentElement;h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';localStorage.setItem('theme',h.dataset.theme);}
+(()=>{const t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t;})();
+
+// Toast
+function toast(msg,ms=3000){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms);}
+
+// State
+let currentMode='daily';
+let planData=null;
+
+// Set default dates
+const today=new Date();
+document.getElementById('startDate').value=today.toISOString().split('T')[0];
+const examDate=new Date(today);examDate.setDate(today.getDate()+14);
+document.getElementById('deadlineDate').value=examDate.toISOString().split('T')[0];
+
+function setMode(btn){
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode=btn.dataset.mode;
+  document.getElementById('deadlineField').style.display=currentMode==='deadline'?'block':'none';
+}
+
+// Load plan data
+function loadPlan(){
+  const raw=sessionStorage.getItem('planResult');
+  if(raw){
+    planData=JSON.parse(raw);
+    renderWeightList();
+    return true;
+  }
+  document.getElementById('noPlanMsg').style.display='flex';
+  return false;
+}
+
+// Color/status helpers
+function getStatus(p,m){if(p<m*0.45)return'critical';if(p<m*0.75)return'average';return'excellent';}
+function getStatusColor(s){return s==='critical'?'#ff4757':s==='average'?'#ffa502':'#2ed573';}
+function getSubjectColor(s,i){const colors=['#7c3aed','#ec4899','#06b6d4','#f59e0b','#10b981','#f97316','#8b5cf6','#06d6a0'];return s.color||colors[i%colors.length];}
+
+// Calculate study hours weight
+function getWeights(predictions){
+  const max=predictions[0]?.maxMark||100;
+  const rawWeights=predictions.map(p=>{
+    const s=getStatus(p.predicted,max);
+    return s==='critical'?3.0:s==='average'?2.0:1.0;
+  });
+  const total=rawWeights.reduce((a,b)=>a+b,0);
+  return rawWeights.map(w=>w/total);
+}
+
+function renderWeightList(){
+  if(!planData) return;
+  const preds=planData.predictions;
+  const weights=getWeights(preds);
+  const max=preds[0]?.maxMark||100;
+  // Total study hours per day (rough estimate)
+  const [sh,em]=getStudyTimes();
+  const totalHrs=(em-sh)/60;
+  const list=document.getElementById('weightList');
+  list.innerHTML=preds.map((p,i)=>{
+    const hrs=(weights[i]*totalHrs).toFixed(1);
+    const s=getStatus(p.predicted,max);
+    const col=getStatusColor(s);
+    const pct=Math.round(weights[i]*100);
+    return `<div class="w-row">
+      <div class="w-dot" style="background:${getSubjectColor(p,i)}"></div>
+      <div class="w-name" title="${p.subject}">${p.subject}</div>
+      <div class="w-bar-wrap"><div class="w-bar" style="width:${pct}%;background:${col}"></div></div>
+      <div class="w-hrs" style="color:${col}">${hrs}h</div>
+    </div>`;
+  }).join('');
+}
+
+function getStudyTimes(){
+  const st=document.getElementById('startTime').value||'09:00';
+  const et=document.getElementById('endTime').value||'22:00';
+  const [sh,sm]=st.split(':').map(Number);
+  const [eh,em]=et.split(':').map(Number);
+  return [sh*60+sm, eh*60+em];
+}
+
+function minsToTime(mins){
+  let h=Math.floor(mins/60)%24,m=mins%60;
+  const ap=h>=12?'PM':'AM';h=h%12||12;
+  return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ap}`;
+}
+
+function addDays(date,days){const d=new Date(date);d.setDate(d.getDate()+days);return d;}
+function formatDate(d){return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});}
+function getDayName(d){return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];}
+
+// ===================== GENERATE =====================
+function generateTimetable(){
+  if(!loadPlan()){toast('⚠️ Generate a study plan first!');return;}
+
+  const preds=planData.predictions;
+  const weights=getWeights(preds);
+  const [startMins,endMins]=getStudyTimes();
+  const totalMins=endMins-startMins;
+  const breakMins=parseInt(document.getElementById('breakMins').value)||15;
+  const max=preds[0]?.maxMark||100;
+
+  if(totalMins<=60){toast('⚠️ Study window too short! At least 1 hour needed.');return;}
+
+  renderWeightList();
+
+  switch(currentMode){
+    case'daily': renderDaily(preds,weights,startMins,totalMins,breakMins,max); break;
+    case'weekly': renderWeekly(preds,weights,startMins,totalMins,breakMins,max); break;
+    case'deadline': renderDeadline(preds,weights,totalMins,max); break;
+    case'hourly': renderHourly(preds,weights,startMins,totalMins,breakMins,max); break;
+  }
+  toast('✅ Timetable generated!');
+}
+
+// ===================== DAILY VIEW =====================
+function renderDaily(preds,weights,startMins,totalMins,breakMins,max){
+  const startDate=new Date(document.getElementById('startDate').value||new Date());
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dayAbbr=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Build 7 days
+  let html=buildTTHeader('📆 7-Day Daily Schedule','daily');
+  html+=buildTTStats(preds,weights,totalMins,max,7);
+  html+=`<div class="view-tabs">
+    <button class="vt active" onclick="setView(this,'daily')">📆 Daily</button>
+    <button class="vt" onclick="setView(this,'weekly')">🗓️ Weekly</button>
+    <button class="vt" onclick="setView(this,'deadline')">🎯 Deadline</button>
+    <button class="vt" onclick="setView(this,'hourly')">⏰ Hourly</button>
+  </div>`;
+  html+=`<div class="daily-grid" id="ttOutput">`;
+
+  for(let d=0;d<7;d++){
+    const date=addDays(startDate,d);
+    const dayName=days[date.getDay()];
+    const isWeekend=date.getDay()===0||date.getDay()===6;
+    let cur=startMins;
+
+    html+=`<div class="day-row">
+      <div class="day-label">
+        <div class="day-name">${dayAbbr[date.getDay()]}</div>
+        <div class="day-date">${formatDate(date)}</div>
+      </div>
+      <div class="day-sessions">`;
+
+    if(isWeekend){
+      // Weekend: lighter schedule
+      const lightPreds=[...preds].sort((a,b)=>(b.predicted/b.maxMark)-(a.predicted/a.maxMark)).slice(0,2);
+      lightPreds.forEach((p,i)=>{
+        const idx=preds.indexOf(p);
+        const hrs=Math.round(weights[idx]*totalMins*0.5/60*10)/10;
+        const s=getStatus(p.predicted,max);
+        html+=`<div class="session ${s}">
+          <div class="session-subj">${p.subject}</div>
+          <div class="session-time">${minsToTime(cur)}</div>
+          <div class="session-hrs">${hrs}h revision</div>
+        </div>`;
+        cur+=Math.round(hrs*60);
+      });
+      html+=`<div class="rest-session">☀️ Weekend — light revision day</div>`;
+    } else {
+      preds.forEach((p,idx)=>{
+        const sessionMins=Math.round(weights[idx]*totalMins);
+        const hrs=Math.round(sessionMins/60*10)/10;
+        const s=getStatus(p.predicted,max);
+        html+=`<div class="session ${s}">
+          <div class="session-subj">${p.subject}</div>
+          <div class="session-time">${minsToTime(cur)}–${minsToTime(cur+sessionMins)}</div>
+          <div class="session-hrs">${hrs}h</div>
+        </div>`;
+        cur+=sessionMins+breakMins;
+      });
+    }
+    html+=`</div></div>`;
+  }
+  html+=`</div>`;
+  html+=buildLegend();
+  renderOutput(html);
+}
+
+// ===================== WEEKLY GRID VIEW =====================
+function renderWeekly(preds,weights,startMins,totalMins,breakMins,max){
+  const startDate=new Date(document.getElementById('startDate').value||new Date());
+  const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const HOURS=['9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM','9PM'];
+
+  let html=buildTTHeader('🗓️ Weekly Grid Timetable','weekly');
+  html+=buildTTStats(preds,weights,totalMins,max,7);
+  html+=`<div class="view-tabs">
+    <button class="vt" onclick="setView(this,'daily')">📆 Daily</button>
+    <button class="vt active" onclick="setView(this,'weekly')">🗓️ Weekly</button>
+    <button class="vt" onclick="setView(this,'deadline')">🎯 Deadline</button>
+    <button class="vt" onclick="setView(this,'hourly')">⏰ Hourly</button>
+  </div>`;
+  html+=`<div class="weekly-wrap"><div class="weekly-grid" id="ttOutput">`;
+
+  // Headers
+  html+=`<div class="wg-header" style="background:transparent;border:none"></div>`;
+  for(let d=0;d<7;d++){
+    const date=addDays(startDate,d);
+    html+=`<div class="wg-header">${DAYS[date.getDay()]}<br/><span style="font-size:0.65rem;opacity:0.6">${formatDate(date)}</span></div>`;
+  }
+
+  // Each hour row
+  HOURS.forEach((hr,hi)=>{
+    html+=`<div class="wg-time">${hr}</div>`;
+    for(let d=0;d<7;d++){
+      const isWeekend=addDays(startDate,d).getDay()===0||addDays(startDate,d).getDay()===6;
+      html+=`<div class="wg-cell">`;
+      // Assign subjects to time slots based on weights
+      preds.forEach((p,pi)=>{
+        // Distribute: each subject gets proportional hours
+        const subjectHour=Math.floor(weights[pi]*HOURS.length*7);
+        // Simple assignment: subject pi gets certain time slots
+        const slotForSubj=Math.floor(pi*HOURS.length/preds.length);
+        if(hi===slotForSubj+(d%2)&&!isWeekend){
+          const s=getStatus(p.predicted,max);
+          html+=`<div class="wc-item ${s}" title="${p.subject}">${p.subject.substring(0,8)}</div>`;
+        }
+      });
+      if(isWeekend&&hi===Math.floor(HOURS.length/2)){
+        html+=`<div class="wc-item rest">☀️ Rest</div>`;
+      }
+      html+=`</div>`;
+    }
+  });
+
+  html+=`</div></div>`;
+  html+=buildLegend();
+  renderOutput(html);
+}
+
+// ===================== DEADLINE VIEW =====================
+function renderDeadline(preds,weights,totalMins,max){
+  const startDate=new Date(document.getElementById('startDate').value||new Date());
+  const deadlineDate=new Date(document.getElementById('deadlineDate').value||new Date(startDate.getTime()+14*86400000));
+  const daysLeft=Math.max(1,Math.ceil((deadlineDate-startDate)/(86400000)));
+  const studyDays=Math.round(daysLeft*0.85); // 85% of days = study days
+  const totalHrsAvail=(totalMins/60)*studyDays;
+
+  let html=buildTTHeader(`🎯 Exam Deadline Plan — ${daysLeft} Days Left`,'deadline');
+
+  // Stats
+  html+=`<div class="tt-stats" id="ttStats">
+    <div class="tt-stat"><div class="tt-stat-num" style="color:var(--c1)">${daysLeft}</div><div class="tt-stat-lbl">Days Left</div></div>
+    <div class="tt-stat"><div class="tt-stat-num" style="color:var(--c2)">${studyDays}</div><div class="tt-stat-lbl">Study Days</div></div>
+    <div class="tt-stat"><div class="tt-stat-num" style="color:var(--c3)">${Math.round(totalHrsAvail)}</div><div class="tt-stat-lbl">Total Hours</div></div>
+    <div class="tt-stat"><div class="tt-stat-num" style="color:var(--c4)">${preds.length}</div><div class="tt-stat-lbl">Subjects</div></div>
+  </div>`;
+  html+=`<div class="view-tabs">
+    <button class="vt" onclick="setView(this,'daily')">📆 Daily</button>
+    <button class="vt" onclick="setView(this,'weekly')">🗓️ Weekly</button>
+    <button class="vt active" onclick="setView(this,'deadline')">🎯 Deadline</button>
+    <button class="vt" onclick="setView(this,'hourly')">⏰ Hourly</button>
+  </div>`;
+  html+=`<div class="deadline-grid" id="ttOutput">`;
+
+  const sorted=[...preds].map((p,i)=>({...p,idx:i,weight:weights[i]}))
+    .sort((a,b)=>b.weight-a.weight);
+
+  sorted.forEach((p,i)=>{
+    const totalHrs=Math.round(p.weight*totalHrsAvail*10)/10;
+    const dailyHrs=Math.round(totalHrs/studyDays*10)/10;
+    const pct=Math.round((p.predicted/max)*100);
+    const s=getStatus(p.predicted,max);
+    const col=getStatusColor(s);
+    const rankIcon=i===0?'🚨':i===1?'⚠️':i===2?'📌':'✅';
+    html+=`<div class="dl-item ${s}">
+      <div class="dl-rank">${rankIcon}</div>
+      <div class="dl-info">
+        <div class="dl-subj">${p.subject}</div>
+        <div class="dl-meta">${dailyHrs}h/day · ${pct}% predicted · ${s.toUpperCase()}</div>
+        <div class="progress-wrap"><div class="progress-fill" style="width:${pct}%;background:${col}"></div></div>
+      </div>
+      <div class="dl-right">
+        <div class="dl-hrs">${totalHrs}h</div>
+        <div class="dl-pct">total study</div>
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+  html+=buildLegend();
+  renderOutput(html);
+}
+
+// ===================== HOURLY VIEW =====================
+function renderHourly(preds,weights,startMins,totalMins,breakMins,max){
+  const endMins=startMins+totalMins;
+  const SLOT=60; // 1 hour slots
+
+  let html=buildTTHeader('⏰ Hourly Study Schedule','hourly');
+  html+=buildTTStats(preds,weights,totalMins,max,1);
+  html+=`<div class="view-tabs">
+    <button class="vt" onclick="setView(this,'daily')">📆 Daily</button>
+    <button class="vt" onclick="setView(this,'weekly')">🗓️ Weekly</button>
+    <button class="vt" onclick="setView(this,'deadline')">🎯 Deadline</button>
+    <button class="vt active" onclick="setView(this,'hourly')">⏰ Hourly</button>
+  </div>`;
+  html+=`<div class="hour-timeline" id="ttOutput">`;
+
+  // Build hour-by-hour schedule
+  let schedule=[];
+  let cur=startMins;
+  preds.forEach((p,i)=>{
+    const sessionMins=Math.round(weights[i]*totalMins);
+    schedule.push({subject:p.subject,start:cur,end:cur+sessionMins,status:getStatus(p.predicted,max),color:getSubjectColor(p,i)});
+    cur+=sessionMins;
+    if(i<preds.length-1){
+      schedule.push({subject:'Break',start:cur,end:cur+breakMins,status:'break',color:'#666'});
+      cur+=breakMins;
+    }
+  });
+
+  // Render each hour row
+  for(let m=startMins;m<Math.min(endMins,startMins+totalMins+60);m+=SLOT){
+    const h=Math.floor(m/60)%24,min=m%60;
+    const ap=h>=12?'PM':'AM';const h12=h%12||12;
+    const timeStr=`${String(h12).padStart(2,'0')}:${String(min).padStart(2,'0')} ${ap}`;
+
+    html+=`<div class="ht-row"><div class="ht-time">${timeStr}</div><div class="ht-bar-wrap">`;
+
+    const slotEnd=m+SLOT;
+    schedule.forEach(s=>{
+      const overlap_start=Math.max(s.start,m);
+      const overlap_end=Math.min(s.end,slotEnd);
+      if(overlap_end>overlap_start){
+        const pct=Math.round((overlap_end-overlap_start)/SLOT*100);
+        const cls=s.status==='break'?'break':s.status;
+        const lbl=pct>15?s.subject.substring(0,12):'';
+        html+=`<div class="ht-segment ${cls}" style="width:${pct}%" title="${s.subject}">${lbl}</div>`;
+      }
+    });
+    html+=`</div></div>`;
+  }
+
+  html+=`</div>`;
+  html+=buildLegend();
+  renderOutput(html);
+}
+
+// ===================== HELPERS =====================
+function buildTTHeader(title,mode){
+  return `<div class="tt-header">
+    <div class="tt-title">${title}</div>
+    <div class="tt-actions">
+      <button class="tt-btn pdf" onclick="exportPDF()">📄 PDF</button>
+      <button class="tt-btn reset" onclick="resetTT()">↺ Reset</button>
+    </div>
+  </div>`;
+}
+
+function buildTTStats(preds,weights,totalMins,max,days){
+  const critical=preds.filter(p=>getStatus(p.predicted,max)==='critical').length;
+  const totalHrs=Math.round(totalMins/60*days*10)/10;
+  const avgScore=Math.round(preds.reduce((a,p)=>a+p.predicted/max*100,0)/preds.length);
+  return `<div class="tt-stats">
+    <div class="tt-stat"><div class="tt-stat-num" style="color:var(--c1)">${preds.length}</div><div class="tt-stat-lbl">Subjects</div></div>
+    <div class="tt-stat"><div class="tt-stat-num" style="color:var(--critical)">${critical}</div><div class="tt-stat-lbl">Critical</div></div>
+    <div class="tt-stat"><div class="tt-stat-num" style="color:var(--c3)">${Math.round(totalMins/60)}h</div><div class="tt-stat-lbl">Study/Day</div></div>
+    <div class="tt-stat"><div class="tt-stat-num" style="color:var(--excellent)">${avgScore}%</div><div class="tt-stat-lbl">Avg Score</div></div>
+  </div>`;
+}
+
+function buildLegend(){
+  return `<div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--critical)"></div>Critical (needs most time)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--average)"></div>Average (moderate time)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--excellent)"></div>Excellent (less time)</div>
+  </div>`;
+}
+
+function renderOutput(html){
+  document.getElementById('ttPanel').innerHTML=html;
+}
+
+function resetTT(){
+  document.getElementById('ttPanel').innerHTML=`<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Your timetable will appear here</div><p style="color:var(--muted);font-size:0.84rem">Configure settings and click Generate Timetable</p></div>`;
+  toast('✅ Timetable cleared');
+}
+
+function setView(btn,mode){
+  document.querySelectorAll('.vt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode=mode;
+  document.querySelectorAll('.mode-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.mode===mode);
+  });
+  document.getElementById('deadlineField').style.display=mode==='deadline'?'block':'none';
+  generateTimetable();
+}
+
+// PDF Export
+function exportPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  let y=20;
+  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(124,58,237);
+  doc.text('NeuralPrep — Smart Timetable',20,y);y+=12;
+  doc.setFontSize(10);doc.setTextColor(120,120,140);doc.setFont('helvetica','normal');
+  doc.text(`Generated: ${new Date().toLocaleDateString()} | Mode: ${currentMode.toUpperCase()}`,20,y);y+=12;
+
+  if(planData){
+    const preds=planData.predictions;
+    const weights=getWeights(preds);
+    const max=preds[0]?.maxMark||100;
+    const [sm,em]=getStudyTimes();
+    const totalHrs=(em-sm)/60;
+
+    doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(40,40,60);
+    doc.text('Subject Study Allocation:',20,y);y+=8;
+    doc.setFontSize(10);doc.setFont('helvetica','normal');
+
+    preds.forEach((p,i)=>{
+      const hrs=(weights[i]*totalHrs).toFixed(1);
+      const pct=Math.round(p.predicted/max*100);
+      const s=getStatus(p.predicted,max).toUpperCase();
+      if(y>270){doc.addPage();y=20;}
+      doc.text(`• ${p.subject}: ${hrs}h/day — ${p.predicted}/${max} (${pct}%) [${s}]`,24,y);y+=7;
+    });
+
+    y+=8;doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(40,40,60);
+    doc.text('Study Schedule:',20,y);y+=8;
+    doc.setFontSize(10);doc.setFont('helvetica','normal');
+    const [startMins]=getStudyTimes();
+    let cur=startMins;
+    const breakMins=parseInt(document.getElementById('breakMins').value)||15;
+    const totalMins=em-sm;
+    preds.forEach((p,i)=>{
+      const sessionMins=Math.round(weights[i]*totalMins);
+      const hrs=(sessionMins/60).toFixed(1);
+      if(y>270){doc.addPage();y=20;}
+      doc.text(`${minsToTime(cur)} — ${p.subject} (${hrs} hours)`,24,y);y+=7;
+      cur+=sessionMins+breakMins;
+    });
+  }
+  doc.save('NeuralPrep_Timetable.pdf');
+  toast('✅ PDF downloaded!');
+}
+
+// Init
+window.addEventListener('load',()=>{
+  loadPlan();
+  document.getElementById('startTime').addEventListener('change',renderWeightList);
+  document.getElementById('endTime').addEventListener('change',renderWeightList);
+});
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+</script>
+</body>
+</html>
